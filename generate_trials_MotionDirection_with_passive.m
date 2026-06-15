@@ -1,3 +1,5 @@
+
+
 function generate_trials_MotionDirection(parDir, subjID, taskType)
 
 pickMov_trial = 2; % 2 values = no-mov and mov

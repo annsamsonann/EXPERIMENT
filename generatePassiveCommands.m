@@ -1,5 +1,22 @@
 %return UNSIGNED 
-function [speed_fast, acc_fast, dist_fast,speed_slow, acc_slow, dist_slow] = generatePassiveCommands(avgFast,avgSlow)
+function [new_speed_fast, new_acc_fast, new_dist_fast, ...
+          new_speed_slow, new_acc_slow, new_dist_slow] = ...
+          generatePassiveCommands(avgFast, avgSlow)
 
+    t = 1.6;              % movement duration in sec
+    cm_per_step = 0.00467;
 
+    % In your latest calibration: commanded == observed
+    cmdFast_cm_s = avgFast;
+    cmdSlow_cm_s = avgSlow;
+
+    % Convert to step-domain motor commands
+    new_speed_fast = round(cmdFast_cm_s / cm_per_step);          % steps/s
+    new_speed_slow = round(cmdSlow_cm_s / cm_per_step);          % steps/s
+
+    new_acc_fast   = round(new_speed_fast * 1000);               % stage accel units used in your test
+    new_acc_slow   = round(new_speed_slow * 1000);
+
+    new_dist_fast  = round((cmdFast_cm_s * t) / cm_per_step);    % steps
+    new_dist_slow  = round((cmdSlow_cm_s * t) / cm_per_step);    % steps
 end
