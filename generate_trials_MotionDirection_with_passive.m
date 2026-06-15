@@ -137,7 +137,7 @@ for post = 1:length(armPosture)
 
             TrialStim_param.Trial_num(n) = n;
             TrialStim_param.PairID(n) = pairID;
-            print('TEST')
+        
 
             TrialStim_param.StimDirection(n) = tacDirectionTrials(idx,1);
             TrialStim_param.HandPosture(n) = tacDirectionTrials(idx,3);
