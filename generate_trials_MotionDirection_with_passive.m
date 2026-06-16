@@ -34,7 +34,7 @@ n_active_blocks = blocks_per_posture / 2;
 n_passive_blocks = blocks_per_posture / 2;
 
 
-outDir = [parDir '\' subjID];
+outDir = fullfile(parDir, subjID);
 if ~isfolder(outDir)
     mkdir(outDir);
 end
@@ -49,13 +49,6 @@ for post = 1:length(armPosture)
 
     tacDirectionTrials = [];
     trialDist = [];
-
-    postureDir = fullfile(outDir, ...
-        [subjID '_' taskType '_ElbowPosture_' num2str(armPosture(post))]);
-
-    if ~isfolder(postureDir)
-        mkdir(postureDir);
-    end
 
     if post == 1
         trialDist = nTrials_condition_posture1;
@@ -193,10 +186,11 @@ for post = 1:length(armPosture)
             TrialStim_param.IsActive(n) = isActiveBlock;
         end
 
-        fileName = fullfile(postureDir, ...
+        fileName = fullfile(outDir, ...
             [subjID '_' taskType ...
             '_ElbowPosture_' num2str(armPosture(post)) ...
             '_pair_' sprintf('%02d', pairID) ...
+            '_block_' sprintf('%02d', bb) ...   % <--- add block number here
             '_' blockTypeStr '.mat']);
         save(fileName, 'TrialStim_param');
         disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
