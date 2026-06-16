@@ -19,13 +19,15 @@ tactileMotion_duration_arduino = tactileMotion_duration * 1000;
 
 armPosture = [90 53 15];
 
+ISI = nan; %#ok<NASGU>
+ITI = 2;
+
 %-------------------------------------
 nTrials_condition_posture1 = zeros(1, length(pickStimDirection_trial)) + 10;
 nTrials_condition_posture2 = nTrials_condition_posture1;
 
 curMov = randi([0 1], 1, 1); %#ok<NASGU>
-ISI = nan; %#ok<NASGU>
-ITI = 3;
+
 
 blocks_per_posture = 16; % total blocks per posture 
 total_blocks = blocks_per_posture * armPosture; % n blocks for the subject 
