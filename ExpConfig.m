@@ -1,0 +1,17 @@
+classdef ExpConfig
+    properties (Constant)
+        cm_per_step = 0.00467;
+        LinStage_range_cm = 17.145;
+        StageMotionDur_sec = 1.75;  
+        StimDur_sec = 1.5
+        stimLag_sec = 0.25
+        encoderThreshold_cm = 0.05
+
+        max_steps = LinStage_range_cm /cm_per_step;
+        max_speed_cm = LinStage_range_cm/StageMotionDur_sec; % = 9.7971
+
+        fast_target = 8; %cm/sec
+        slow_target = 1.5; %cm/sec
+
+    end
+end
