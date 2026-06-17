@@ -1,7 +1,14 @@
 %return UNSIGNED 
 function [new_speed_fast, new_acc_fast, new_dist_fast, ...
           new_speed_slow, new_acc_slow, new_dist_slow] = ...
-          generatePassiveCommands(avgFast, avgSlow)
+          generatePassiveCommands(activeBehavior)
+
+
+      isFast = activeBehavior.Arm_Mov_Acc_arduino == app.fastMotionCommanded;
+      isSlow = activeBehavior.Arm_Mov_Acc_arduino == app.slowMotionCommanded;
+
+      avgFast = mean(activeBehavior.MeasuredSpeed_cm_s(isFast), 'omitnan');
+      avgSlow = mean(activeBehavior.MeasuredSpeed_cm_s(isSlow), 'omitnan');
 
     t = 1.6;              % movement duration in sec
     cm_per_step = 0.00467;
