@@ -6,7 +6,7 @@ pickMov_trial = 2; % 2 values = no-mov and mov
 pickArmMovSpeed = [0 ExpConfig.slow_target ExpConfig.fast_target]; % 3 values = no (0 cm/s), slow (1.36 cm/s), fast (7.56 cm/s)
 pickArmMovSpeed_arduino = [0 ExpConfig.slow_target_speed_steps ExpConfig.fast_target_speed_steps]; % values that will displace the stage with the speed indicated above !!!!!
 pickArmMovAcc_arduino =  pickArmMovSpeed * ExpConfig.acc_constant; % values that will displace the stage with the acceleration
-pickArmMovSteps_arduino = pickArmMovSpeed_arduino  * ExpConfig.StageMotionDur_sec ; % values that will displace the stage with the desired distance
+pickArmMovSteps_arduino = round(pickArmMovSpeed_arduino  * ExpConfig.StageMotionDur_sec) ; % values that will displace the stage with the desired distance
 durationArm_mov = ExpConfig.StageMotionDur_sec; % in seconds, motion of the arm
 
 pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];

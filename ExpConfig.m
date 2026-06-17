@@ -17,8 +17,8 @@ classdef ExpConfig
         fast_target          = 8;                     % cm/sec
         slow_target          = 1;                     % cm/sec
 
-        fast_target_speed_steps = 8 / 0.00467;
-        slow_target_speed_steps = 1 / 0.00467;
+        fast_target_speed_steps = 1713 ; % round(8 / 0.00467);
+        slow_target_speed_steps = 214; %round 1 / 0.00467;
 
         ITI = 2; %sec
 
