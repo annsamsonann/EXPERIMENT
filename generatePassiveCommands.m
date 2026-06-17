@@ -41,6 +41,15 @@ function [new_speed_fast, new_acc_fast, new_dist_fast, new_speed_slow, new_acc_s
       new_acc_slow   = round(new_speed_slow * 1000);
       new_dist_fast  = round((cmdFast_cm_s * t) / cm_per_step);    % steps
       new_dist_slow  = round((cmdSlow_cm_s * t) / cm_per_step);    % steps
+    nFastInRange = sum(FastTrialsGoodMask);
+nSlowInRange = sum(SlowTrialsGoodMask);
+    if nFastInRange == 0
+        fprintf('FAST avg is NaN because no fast trials passed the threshold.\n');
+    end
+    
+    if nSlowInRange == 0
+        fprintf('SLOW avg is NaN because no slow trials passed the threshold.\n');
+    end
 
 
 end
