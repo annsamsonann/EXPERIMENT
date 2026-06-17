@@ -1,22 +1,49 @@
 classdef ExpConfig
     properties (Constant)
-        cm_per_step = 0.00467;
+
+        cm_per_step          = 0.00467;
         LinStage_range_steps = 3640;
-        LinStage_range_cm = LinStage_range_steps * cm_per_step;
+        LinStage_range_cm    = 3640 * 0.00467;        % use literals here
 
-        StageMotionDur_sec = 1.75;  
-        StimDur_sec = 1.5
-        stimLag_sec = 0.25
-        encoderThreshold_cm = 0.05
+        acc_constant         = 1000;                  % multiply speed by this
+        StageMotionDur_sec   = 1.75;
+        StimDur_sec          = 1.5;
+        stimLag_sec          = 0.25;
+        encoderThreshold_cm  = 0.05;
 
-        max_steps = LinStage_range_cm /cm_per_step; %distance
-        max_speed_cm = LinStage_range_cm/StageMotionDur_sec; % = 9.7971
+        max_steps            = 3640;                  % same as LinStage_range_steps
+        max_speed_cm         = (3640 * 0.00467) / 1.75;
 
-        fast_target = 8; %cm/sec
-        slow_target = 1.5; %cm/sec
+        fast_target          = 8;                     % cm/sec
+        slow_target          = 1;                     % cm/sec
 
-        fast_target_speed_steps = fast_target / cm_per_step;
-        slow_target_speed_steps = slow_target/cm_per_step;
+        fast_target_speed_steps = 8 / 0.00467;
+        slow_target_speed_steps = 1 / 0.00467;
+
+        ITI = 2; %sec
+
+
+               %  cm_per_step = 0.00467;
+       %  LinStage_range_steps = 3640;
+       % % LinStage_range_cm = LinStage_range_steps * cm_per_step ;
+       % 
+       %  acc_constant = 1000; %multiply speed by this value 
+       % 
+       %  StageMotionDur_sec = 1.75;  
+       %  StimDur_sec = 1.5
+       %  stimLag_sec = 0.25
+       %  encoderThreshold_cm = 0.05
+       % 
+       % % max_steps = LinStage_range_cm /cm_per_step; %distance
+       % % max_speed_cm = LinStage_range_cm/StageMotionDur_sec; % = 9.7971
+       % 
+       %  fast_target = 8; %cm/sec
+       %  slow_target = 1; %cm/sec
+       % 
+       % % fast_target_speed_steps = fast_target / cm_per_step;
+       % % slow_target_speed_steps = slow_target/ cm_per_step;
+
+
 
     end
 end

@@ -3,12 +3,12 @@
 function generate_trials_MotionDirection(parDir, subjID, taskType)
 
 pickMov_trial = 2; % 2 values = no-mov and mov
-pickArmMovSpeed = [0 1.36 7.56]; % 3 values = no (0 cm/s), slow (1.36 cm/s), fast (7.56 cm/s)
-pickArmMovSpeed_arduino = [0 370 2400]; % values that will displace the stage with the speed indicated above !!!!!
-pickArmMovAcc_arduino = [0 370 2400]; % values that will displace the stage with the acceleration indicated above !!!! change to the one we fiound 
-pickArmMovSteps_arduino = [0 357 1800]; % values that will displace the stage with the desired distance
+pickArmMovSpeed = [0 ExpConfig.slow_target ExpConfig.fast_target]; % 3 values = no (0 cm/s), slow (1.36 cm/s), fast (7.56 cm/s)
+pickArmMovSpeed_arduino = [0 ExpConfig.slow_target_speed_steps ExpConfig.fast_target_speed_steps]; % values that will displace the stage with the speed indicated above !!!!!
+pickArmMovAcc_arduino =  pickArmMovSpeed * ExpConfig.acc_constant; % values that will displace the stage with the acceleration
+pickArmMovSteps_arduino = pickArmMovSpeed_arduino  * ExpConfig.StageMotionDur_sec ; % values that will displace the stage with the desired distance
+durationArm_mov = ExpConfig.StageMotionDur_sec; % in seconds, motion of the arm
 
-durationArm_mov = 1.6; % in seconds, motion of the arm
 pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];
 tactileMotion_speed = 30; % in cm/s
 tactileMotion_stimIndent = 1; % in mm
@@ -20,7 +20,7 @@ tactileMotion_duration_arduino = tactileMotion_duration * 1000;
 armPosture = [90 53 15];
 
 ISI = nan; %#ok<NASGU>
-ITI = 2;
+ITI = ExpConfig.ITI; 
 
 %-------------------------------------
 nTrials_condition_posture1 = zeros(1, length(pickStimDirection_trial)) + 10;
@@ -30,7 +30,7 @@ curMov = randi([0 1], 1, 1); %#ok<NASGU>
 
 
 blocks_per_posture = 16; % total blocks per posture 
-total_blocks = blocks_per_posture * armPosture; % n blocks for the subject 
+total_blocks = blocks_per_posture * length(armPosture); % n blocks for the subject 
 
 n_active_blocks = blocks_per_posture / 2;
 n_passive_blocks = blocks_per_posture / 2;
