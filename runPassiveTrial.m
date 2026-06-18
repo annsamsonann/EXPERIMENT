@@ -1,8 +1,6 @@
- function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory)
+ function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage)
     % ---------------------  PREPARE  ---------------------
             try
-                resetSpeedDisplay(app);
-        
                 % ROTATE stimulus to the correct direction - PREP
                 myAngle = trialRow.StimDirection;
                 [app.curAngle, flipSpeed] = correctDirection(app.rotation_and_spin_motor, app.curAngle, myAngle);
@@ -115,7 +113,7 @@
                     % collect encoder from passive arm movement onset onward
                     newSamples = readAvailableEncoderSamples(app);
                     if ~isempty(newSamples)
-                        encoderSamples = [encoderSamples; newSamples]; %#ok<AGROW>
+                        encoderSamples = [encoderSamples; newSamples]; 
                         updateCurrentSpeedDisplay(app, encoderSamples);
                     end
         
@@ -148,7 +146,7 @@
                 % ---------------------  STIMULUS DONE ---------------------
                 trialRow.EncoderSamples = {encoderSamples};
                 trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
-                updateSpeedHistogram(app, encoderSamples);
+                 (app, encoderSamples);
         
                 if stimStarted && isempty(buttonPushed)
                     [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);

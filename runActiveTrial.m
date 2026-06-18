@@ -1,6 +1,5 @@
- function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory)
-        resetSpeedDisplay(app);
-    
+ function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage)
+
         myAngle = trialRow.StimDirection;
         [app.curAngle, flipSpeed] = correctDirection(app.rotation_and_spin_motor, app.curAngle, myAngle);
     
@@ -111,7 +110,7 @@
     
         trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
         trialRow.EncoderSamples = {encoderSamples};
-        updateSpeedHistogram(app, encoderSamples);
+         (app, encoderSamples);
     
         if stimStarted && isempty(buttonPushed)
             [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);
@@ -188,4 +187,32 @@
    
     
    
+        function [startArmMov, onsetSample] = waitForEncoderMotion(app, threshold_cm)
+            startArmMov = NaN;
+            onsetSample = [];
+        
+            flushRotaryEncoderBuffer(app);
+            zeroRotaryEncoder(app);
+            pause(0.05);
+        
+            while isnan(startArmMov)
+                samples = readAvailableEncoderSamples(app);
+        
+                if ~isempty(samples)
+                    idx = find(abs(samples(:,3)) >= threshold_cm, 1, 'first');
+        
+                    if ~isempty(idx)
+                        startArmMov = GetSecs;
+                        onsetSample = samples(idx,:);   % [t_ms count dist_cm]
+                        break;
+                    end
+                end
+        
+                drawnow limitrate
+                if app.stopGUI == 1
+                    app.stopGUI = 0;
+                    error('Experiment stopped');
+                end
+            end
+    end
     
