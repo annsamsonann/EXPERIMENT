@@ -74,7 +74,7 @@
                 trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
         
                 flushRotaryEncoderBuffer(app);
-                zeroRotaryEncoder(app);
+                writeline(app.rotaryEncoder, "ZERO");%zeroRotaryEncoder(app);
                 pause(0.05);
         
                 cmd = sprintf("M %d\n", stepsStage);

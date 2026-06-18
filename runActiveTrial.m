@@ -180,7 +180,7 @@
             onsetSample = [];
         
             flushRotaryEncoderBuffer(app);
-            zeroRotaryEncoder(app);
+            writeline(app.rotaryEncoder, "ZERO"); %zeroRotaryEncoder(app);
             pause(0.05);
         
             while isnan(startArmMov)
