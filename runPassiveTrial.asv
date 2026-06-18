@@ -110,7 +110,7 @@ try
                 respTime = GetSecs - startStim;
                 DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
                 Screen('Flip', windowPtr);
-              %  break;
+                break;
             end
 
             if GetSecs >= stimEndTime
