@@ -29,8 +29,8 @@ function S = generatePassiveCommands(activeBehavior)
     S.new_speed_fast_steps = round(S.avgFast / cm_per_step);
     S.new_speed_slow_steps = round(S.avgSlow / cm_per_step);
 
-    S.new_acc_fast_steps = round(S.new_speed_fast * 1000);
-    S.new_acc_slow_steps = round(S.new_speed_slow * 1000);
+    S.new_acc_fast_steps = round(S.new_speed_fast_steps * 1000);
+    S.new_acc_slow_steps = round(S.new_speed_slow_steps * 1000);
 
     S.new_dist_fast_steps = round((S.avgFast * t) / cm_per_step);
     S.new_dist_slow_steps = round((S.avgSlow * t) / cm_per_step);
