@@ -1,4 +1,4 @@
- function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage)
+ function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag)
     
         buttonPushed = [];
         respTime = [];
@@ -108,7 +108,7 @@
     
         trialRow.Response = buttonPushed;
         trialRow.ReactionTime = respTime;
-        myTrialHistory = printResponseInfo(app, myTrialHistory, buttonPushed);
+      %  myTrialHistory = printResponseInfo(app, myTrialHistory, buttonPushed);
     end
 
     function drawActiveMovementCountdown(app, windowPtr, w, moveDurSec, startArmMov, showResponsePrompt)
