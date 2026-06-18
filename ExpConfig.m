@@ -21,6 +21,14 @@ classdef ExpConfig
         slow_target_speed_steps = 214; %round 1 / 0.00467;
 
         ITI = 2; %sec
+        %These are the setting to make sure the stage moves to the next
+        %start (or start at the beggining of the block) in  under 1.5 sec -
+        %to fit in the ITI and blovk start que 
+        %expected about 1.22sec for fast target*1.2, 1.5 for the whole
+        %stage length (3640) 
+        betweenTrialsMotionSpeed_steps = 5000;
+        betweenTrialsMotionAcc_steps = 10000;
+
 
 
                %  cm_per_step = 0.00467;
