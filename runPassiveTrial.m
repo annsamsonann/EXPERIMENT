@@ -157,11 +157,6 @@ catch ME
 end
 end
 
-function printResponsePrompt(app, windowPtr)
-textString = 'Left or Right Response';
-DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
-Screen('Flip', windowPtr);
-end
 
 function printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag)
 % DISPLAY Motion Direction cue to subject
