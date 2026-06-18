@@ -1,18 +1,4 @@
  function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage)
-
-        myAngle = trialRow.StimDirection;
-        [app.curAngle, flipSpeed] = correctDirection(app.rotation_and_spin_motor, app.curAngle, myAngle);
-    
-        accStage = trialRow.Arm_Mov_Acc_arduino;
-        stepsStage = trialRow.Arm_Mov_Steps_arduino;
-        speedStage = trialRow.Arm_Mov_Speed_arduino;
-    
-        [w, w1, no_motion_flag] = getTrialInfo(app, stepsStage, speedStage);
-        myTrialHistory = printTrialInfo(app, myTrialHistory, n, w, w1, myAngle);
-    
-
-        stimStarted = false;
-        indentMovedDown = false;
     
         buttonPushed = [];
         respTime = [];
@@ -20,6 +6,8 @@
         startStim = nan;
         stimEndTime = nan;
     
+        stimStarted = false;
+        indentMovedDown = false;
         % ---------------------  TRIAL ONSET  ---------------------
         startTrial = GetSecs;
         trialRow.TrialStart_time = startTrial - expTime_start;
@@ -110,7 +98,7 @@
     
         trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
         trialRow.EncoderSamples = {encoderSamples};
-         (app, encoderSamples);
+  
     
         if stimStarted && isempty(buttonPushed)
             [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);

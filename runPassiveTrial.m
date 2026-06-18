@@ -1,27 +1,15 @@
  function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage)
     % ---------------------  PREPARE  ---------------------
             try
-                % ROTATE stimulus to the correct direction - PREP
-                myAngle = trialRow.StimDirection;
-                [app.curAngle, flipSpeed] = correctDirection(app.rotation_and_spin_motor, app.curAngle, myAngle);
-        
-                % GET the speed, acceleration, and steps for the linear stage
-                speedStage = trialRow.Arm_Mov_Speed_arduino;
-                accStage   = trialRow.Arm_Mov_Acc_arduino;
-                stepsStage = trialRow.Arm_Mov_Steps_arduino;
-        
-                % GET trial info
-                [w, w1, no_motion_flag] = getTrialInfo(app, stepsStage, speedStage);
-        
-                % PRINT trial information in the app box - DEBUG
-                myTrialHistory = printTrialInfo(app, myTrialHistory, n, w, w1, myAngle);
         
                 buttonPushed = [];
                 respTime = [];
                 encoderSamples = [];
                 startStim = nan;
-                stimStarted = false;
                 stimEndTime = nan;
+
+                stimStarted = false;
+                %stim ident (?) 
         
                 % ---------------------  TRIAL ONSET  ---------------------
                 startTrial = GetSecs;
@@ -146,8 +134,7 @@
                 % ---------------------  STIMULUS DONE ---------------------
                 trialRow.EncoderSamples = {encoderSamples};
                 trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
-                 (app, encoderSamples);
-        
+                
                 if stimStarted && isempty(buttonPushed)
                     [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);
                 elseif ~stimStarted
