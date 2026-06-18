@@ -1,7 +1,7 @@
 %return UNSIGNED 
 function [avgFast,avgSlow,new_speed_fast, new_acc_fast, new_dist_fast, new_speed_slow, new_acc_slow, new_dist_slow] = generatePassiveCommands(activeBehavior,fastMotionCommanded,slowMotionCommanded)
-      isFast = activeBehavior.Arm_Mov_Acc_arduino == fastMotionCommanded;
-      isSlow = activeBehavior.Arm_Mov_Acc_arduino == slowMotionCommanded;
+      isFast = activeBehavior.Arm_Mov_Speed_arduino == fastMotionCommanded;
+      isSlow = activeBehavior.Arm_Mov_Speed_arduino == slowMotionCommanded;
       cm_per_step = ExpConfig.cm_per_step;
       t = ExpConfig.StageMotionDur_sec;
 
