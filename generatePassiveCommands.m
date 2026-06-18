@@ -26,15 +26,24 @@ function S = generatePassiveCommands(activeBehavior)
     S.avgFast = mean(FastTrialsGood, 'omitnan');
     S.avgSlow = mean(SlowTrialsGood, 'omitnan');
 
-    S.new_speed_fast = round(S.avgFast / cm_per_step);
-    S.new_speed_slow = round(S.avgSlow / cm_per_step);
+    S.new_speed_fast_steps = round(S.avgFast / cm_per_step);
+    S.new_speed_slow_steps = round(S.avgSlow / cm_per_step);
 
-    S.new_acc_fast = round(S.new_speed_fast * 1000);
-    S.new_acc_slow = round(S.new_speed_slow * 1000);
+    S.new_acc_fast_steps = round(S.new_speed_fast * 1000);
+    S.new_acc_slow_steps = round(S.new_speed_slow * 1000);
 
-    S.new_dist_fast = round((S.avgFast * t) / cm_per_step);
-    S.new_dist_slow = round((S.avgSlow * t) / cm_per_step);
+    S.new_dist_fast_steps = round((S.avgFast * t) / cm_per_step);
+    S.new_dist_slow_steps = round((S.avgSlow * t) / cm_per_step);
 
     S.nFastInRange = sum(FastTrialsGoodMask);
     S.nSlowInRange = sum(SlowTrialsGoodMask);
+    if S.nFastInRange == 0
+        warning('generatePassiveCommands:NoFastTrialsInRange', ...
+        'No FAST trials passed the threshold; avgFast/new fast commands may be NaN.');
+    end
+    
+    if S.nSlowInRange == 0
+        warning('generatePassiveCommands:NoSlowTrialsInRange', ...
+            'No SLOW trials passed the threshold; avgSlow/new slow commands may be NaN.');
+    end
 end
