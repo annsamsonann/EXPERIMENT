@@ -67,8 +67,7 @@ while true
             printResponsePrompt(app, windowPtr);
         end
     else
-        drawActiveMovementCountdown(app, windowPtr, w, ExpConfig.StageMotionDur_sec, startArmMov, ...
-                        stimStarted, speedToTrain, moveDir, screenWidthCm, ballDiamDeg, viewDistCm, padCm)
+        drawActiveMovementCountdown(app, windowPtr, w, app.moveDurSec, startArmMov, stimStarted);
     end
 
     % collect encoder from arm movement onset onward
@@ -121,7 +120,7 @@ end
 
 trialRow.Response = buttonPushed;
 trialRow.ReactionTime = respTime;
-%myTrialHistory = printResponseInfo(app, myTrialHistory, buttonPushed);
+myTrialHistory = printResponseInfo(app, myTrialHistory, buttonPushed);
 end
 % 
 % function drawActiveMovementCountdown(app, windowPtr, w, moveDurSec, startArmMov, showResponsePrompt)
