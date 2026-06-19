@@ -100,7 +100,6 @@ try
         newSamples = readAvailableEncoderSamples(app);
         if ~isempty(newSamples)
             encoderSamples = [encoderSamples; newSamples];
-            updateCurrentSpeedDisplay(app, encoderSamples);
         end
 
         if stimStarted
@@ -131,7 +130,9 @@ try
 
     % ---------------------  STIMULUS DONE ---------------------
     trialRow.EncoderSamples = {encoderSamples};
-    trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
+    measuredSpeed = computeAverageEncoderVelocity(app, encoderSamples);
+    trialRow.MeasuredSpeed_cm_s = measuredSpeed;
+    updateCurrentSpeedDisplay(app, measuredSpeed);
 
     if stimStarted && isempty(buttonPushed)
         [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);

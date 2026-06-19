@@ -75,7 +75,7 @@ while true
     newSamples = readAvailableEncoderSamples(app);
     if ~isempty(newSamples)
         encoderSamples = [encoderSamples; newSamples];
-        updateCurrentSpeedDisplay(app, encoderSamples);
+       
     end
 
     if stimStarted
@@ -108,9 +108,11 @@ if indentMovedDown
     indentLoc = app.indentZero;
     write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
 end
-
-trialRow.MeasuredSpeed_cm_s = computeAverageEncoderVelocity(app, encoderSamples);
+avgVelocity = computeAverageEncoderVelocity(app, encoderSamples);
+updateCurrentSpeedDisplay(app, avgVelocity);
+trialRow.MeasuredSpeed_cm_s = avgVelocity;
 trialRow.EncoderSamples = {encoderSamples};
+
 
 
 if stimStarted && isempty(buttonPushed)
