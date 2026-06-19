@@ -64,8 +64,6 @@ while true
     end
 
     if stimStarted
-
-
         [~, ~, buttons] = GetMouse;
         if any(buttons)
             buttonPushed = find(buttons ~= 0, 1);
