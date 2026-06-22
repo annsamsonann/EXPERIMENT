@@ -147,12 +147,13 @@ end
 % 
 % centerY = screenY / 2;
 % 
-% instrY = round(centerY - 140);
+% instrfY = round(centerY - 140);
 % respY  = round(centerY - 60);
 % timerY = round(centerY + 20);
 % barY   = round(centerY + 120);
 % 
-% DrawFormattedText(windowPtr, sprintf('Keep moving your arm %s', w), ...
+% D1
+%tedText(windowPtr, sprintf('Keep moving your arm %s', w), ...
 %     'center', instrY, [255 255 255]);
 % 
 % if showResponsePrompt
