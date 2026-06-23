@@ -15,6 +15,7 @@ ballDiamDeg = 1.0;
 padCm = 0;
 startArmMov = NaN; 
 threshold_cm = ExpConfig.encoderThreshold_cm;
+responded = false ; 
 
 if w1 =="fast"
     speedToTrain = ExpConfig.fast_target;
@@ -68,7 +69,7 @@ stimDurSec = trialRow.StimDuration_arduino / 1000;
 while true
     elapsed = GetSecs - startArmMov;
     showBall = false; 
-    if ~no_motion_flag
+    if ~no_motion_flag 
         drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
                 false, speedToTrain, moveDir, screenWidthCm, ballDiamDeg, ...
                 viewDistCm, padCm, startTrial, moveDir, showBall);
@@ -106,12 +107,13 @@ while true
         if any(buttons)
             buttonPushed = find(buttons ~= 0, 1);
             respTime = GetSecs - startStim;
-            DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
-            Screen('Flip', windowPtr);
-            break;
+            break
+            % if GetSecs >= stimEndTime 
+            %     break;
+            % end
         end
 
-        if GetSecs >= stimEndTime
+        if GetSecs >= stimEndTime 
             break;
         end
     end

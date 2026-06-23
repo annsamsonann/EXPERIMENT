@@ -15,6 +15,7 @@ ballDiamDeg = 1.0;
 padCm = 0;
 startArmMov = NaN; 
 threshold_cm = ExpConfig.encoderThreshold_cm;
+responded = false ; 
 
 if w1 =="fast"
     speedToTrain = ExpConfig.fast_target;
@@ -68,7 +69,7 @@ stimDurSec = trialRow.StimDuration_arduino / 1000;
 while true
     elapsed = GetSecs - startArmMov;
     showBall = false; 
-    if ~no_motion_flag
+    if ~no_motion_flag 
         drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
                 false, speedToTrain, moveDir, screenWidthCm, ballDiamDeg, ...
                 viewDistCm, padCm, startTrial, moveDir, showBall);
@@ -88,17 +89,16 @@ while true
         indentMovedDown = true;
     end
 
-    if no_motion_flag
-        if stimStarted
-            printResponsePrompt(app, windowPtr);
-        end
-    end 
+    % if no_motion_flag
+    %     if stimStarted
+    %         printResponsePrompt(app, windowPtr);
+    %     end
+    % end 
 
     % collect encoder from arm movement onset onward
     newSamples = readAvailableEncoderSamples(app);
     if ~isempty(newSamples)
         encoderSamples = [encoderSamples; newSamples];
-       
     end
 
     if stimStarted
@@ -106,12 +106,13 @@ while true
         if any(buttons)
             buttonPushed = find(buttons ~= 0, 1);
             respTime = GetSecs - startStim;
-            DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
-            Screen('Flip', windowPtr);
-            break;
+            break
+            % if GetSecs >= stimEndTime 
+            %     break;
+            % end
         end
 
-        if GetSecs >= stimEndTime
+        if GetSecs >= stimEndTime 
             break;
         end
     end
@@ -130,7 +131,13 @@ end
 if indentMovedDown
     indentLoc = app.indentZero;
     write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
+end 
+
+while GetSecs < stimEndTime % waitto show return cue if they have responded before stim end 
+    WaitSecs('YieldSecs', 0.001);
 end
+
+
 avgVelocity = computeAverageEncoderVelocity(app, encoderSamples);
 updateCurrentSpeedDisplay(app, avgVelocity);
 trialRow.MeasuredSpeed_cm_s = avgVelocity;
@@ -151,52 +158,48 @@ end
 
 function drawInstructionCue(app, windowPtr, w, moveDurSec, ...
     showResponsePrompt, speedCmPerSec, moveDir, screenWidthCm, ballDiamDeg, ...
-    viewDistCm, padCm, startCue, directionToMove,showBall)
+    viewDistCm, padCm, startCue, directionToMove, showBall)
+
 elapsed = mod(GetSecs - startCue, moveDurSec);
-if elapsed > moveDurSec
-    elapsed = moveDurSec;
-elseif elapsed < 0
+if elapsed < 0
     elapsed = 0;
 end
-textString = sprintf('Move %s with %s speed', directionToMove , w);
 
-% clear screen
+textString = sprintf('Move %s with %s speed', directionToMove, w);
+
+% Clear screen
 Screen('FillRect', windowPtr, [0 0 0]);
-% window geometry
+
+% Window geometry
 [screenX, screenY] = Screen('WindowSize', windowPtr);
+centerX = screenX / 2;
 centerY = screenY / 2;
 
-% text settings
+% Text settings
 Screen('TextFont', windowPtr, 'Arial');
 Screen('TextSize', windowPtr, 28);
 Screen('TextStyle', windowPtr, 0);
 
-instrY = round(centerY - 140);
-respY  = round(centerY - 60);
+% Draw instruction text centered
+DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
 
-DrawFormattedText(windowPtr,textString , ...
-    'center', instrY, [255 255 255]);
-
-% ----------------------------
-% conversions
-% ----------------------------
+% Conversions
 pixPerCm = screenX / screenWidthCm;
 
-% ball size: degrees -> cm -> pixels
+% Ball size: degrees -> cm -> pixels
 ballDiamCm = 2 * viewDistCm * tand(ballDiamDeg / 2);
 ballDiamPix = max(6, round(ballDiamCm * pixPerCm));
 ballRadiusPix = ballDiamPix / 2;
 
-% motion distance
+% Motion distance
 dxCm = speedCmPerSec * elapsed;
 dxPix = dxCm * pixPerCm;
 
 totalDxCm = speedCmPerSec * moveDurSec;
 totalDxPix = totalDxCm * pixPerCm;
 
-% padding corridor
+% Padding corridor
 padPix = padCm * pixPerCm;
-
 leftBound  = padPix + ballRadiusPix;
 rightBound = screenX - padPix - ballRadiusPix;
 usableWidth = rightBound - leftBound;
@@ -205,8 +208,8 @@ if totalDxPix > usableWidth
     error('Motion path too long for screen width and chosen padding.');
 end
 
-% center the full path within the padded corridor
-pathLeft = leftBound + (usableWidth - totalDxPix) / 2;
+% Center the full path within the padded corridor
+pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
 pathRight = rightBound - (usableWidth - totalDxPix) / 2;
 
 if strcmpi(moveDir, 'right')
@@ -217,25 +220,22 @@ else
     error('moveDir must be ''left'' or ''right''.');
 end
 
-% optional clamp for safety
+% Safety clamp
 ballX = max(leftBound, min(rightBound, ballX));
 
-% vertical location of ball
-ballY = centerY + 40;
+% Ball below centered text
+ballY = centerY + 80;
 
 ballRect = [ballX - ballRadiusPix, ballY - ballRadiusPix, ...
     ballX + ballRadiusPix, ballY + ballRadiusPix];
 
-% draw ball
+% Draw ball if requested
 if showBall
     Screen('FillOval', windowPtr, [255 0 0], ballRect);
 end
 
 Screen('Flip', windowPtr);
-
 end
-
-
 function printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag)
 if ~no_motion_flag
     textString = sprintf('Move %s with %s speed', w, w1);
@@ -246,111 +246,6 @@ DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
 Screen('Flip', windowPtr);
 WaitSecs(2);
 end
-
-function drawActiveMovementCountdown(app, windowPtr, w, moveDurSec, startArmMov, ...
-    showResponsePrompt, speedCmPerSec, moveDir, screenWidthCm, ballDiamDeg, ...
-    viewDistCm, padCm)
-
-% elapsed time
-elapsed = GetSecs - startArmMov;
-if elapsed > moveDurSec
-    elapsed = moveDurSec;
-elseif elapsed < 0
-    elapsed = 0;
-end
-
-% clear screen
-Screen('FillRect', windowPtr, [0 0 0]);
-
-% window geometry
-[screenX, screenY] = Screen('WindowSize', windowPtr);
-centerY = screenY / 2;
-
-% text settings
-Screen('TextFont', windowPtr, 'Arial');
-Screen('TextSize', windowPtr, 28);
-Screen('TextStyle', windowPtr, 0);
-
-instrY = round(centerY - 140);
-respY  = round(centerY - 60);
-
-DrawFormattedText(windowPtr, sprintf('Keep moving your arm %s', w), ...
-    'center', instrY, [255 255 255]);
-
-if showResponsePrompt
-    DrawFormattedText(windowPtr, 'Left or Right Response', ...
-        'center', respY, [255 255 255]);
-end
-
-% ----------------------------
-% conversions
-% ----------------------------
-pixPerCm = screenX / screenWidthCm;
-
-% ball size: degrees -> cm -> pixels
-ballDiamCm = 2 * viewDistCm * tand(ballDiamDeg / 2);
-ballDiamPix = max(6, round(ballDiamCm * pixPerCm));
-ballRadiusPix = ballDiamPix / 2;
-
-% motion distance
-dxCm = speedCmPerSec * elapsed;
-dxPix = dxCm * pixPerCm;
-
-totalDxCm = speedCmPerSec * moveDurSec;
-totalDxPix = totalDxCm * pixPerCm;
-
-% padding corridor
-padPix = padCm * pixPerCm;
-
-leftBound  = padPix + ballRadiusPix;
-rightBound = screenX - padPix - ballRadiusPix;
-usableWidth = rightBound - leftBound;
-% fprintf('screenX=%g, screenY=%g\n', screenX, screenY);
-% fprintf('screenWidthCm=%g, viewDistCm=%g, ballDiamDeg=%g, padCm=%g\n', ...
-%     screenWidthCm, viewDistCm, ballDiamDeg, padCm);
-% fprintf('pixPerCm=%g\n', pixPerCm);
-% fprintf('ballDiamCm=%g, ballDiamPix=%g\n', ballDiamCm, ballDiamPix);
-% fprintf('speedCmPerSec=%g, moveDurSec=%g\n', speedCmPerSec, moveDurSec);
-% fprintf('totalDxCm=%g, totalDxPix=%g\n', totalDxCm, totalDxPix);
-% fprintf('leftBound=%g, rightBound=%g, usableWidth=%g\n', ...
-%     leftBound, rightBound, usableWidth);
-
-if totalDxPix > usableWidth
-    error('Motion path too long for screen width and chosen padding.');
-end
-
-% center the full path within the padded corridor
-pathLeft = leftBound + (usableWidth - totalDxPix) / 2;
-pathRight = rightBound - (usableWidth - totalDxPix) / 2;
-
-if strcmpi(moveDir, 'right')
-    ballX = pathLeft + dxPix;
-elseif strcmpi(moveDir, 'left')
-    ballX = pathRight - dxPix;
-else
-    error('moveDir must be ''left'' or ''right''.');
-end
-
-% optional clamp for safety
-ballX = max(leftBound, min(rightBound, ballX));
-
-% vertical location of ball
-ballY = centerY + 40;
-
-ballRect = [ballX - ballRadiusPix, ballY - ballRadiusPix, ...
-    ballX + ballRadiusPix, ballY + ballRadiusPix];
-
-% draw ball
-Screen('FillOval', windowPtr, [255 255 255], ballRect);
-
-% optional: draw motion corridor for debugging
-% Screen('FrameRect', windowPtr, [100 100 100], ...
-%     [leftBound, ballY - 40, rightBound, ballY + 40], 1);
-
-Screen('Flip', windowPtr);
-
-end
-
 
 
 
