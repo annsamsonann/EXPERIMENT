@@ -9,13 +9,13 @@ classdef ExpConfig
         StageMotionDur_sec   = 1.75;
         StimDur_sec          = 1.5;
         stimLag_sec          = 0.25;
-        encoderThreshold_cm  = 0.05;
+        encoderThreshold_cm  = 1;
 
         max_steps            = 3640;                  % same as LinStage_range_steps
         max_speed_cm         = (3640 * 0.00467) / 1.75;
 
         fast_target          = 8;                     % cm/sec
-        slow_target          = 1;                     % cm/sec
+        slow_target          = 3;                     % cm/sec
 
         fast_target_speed_steps = 1713 ; % round(8 / 0.00467);
         slow_target_speed_steps = 214; %round 1 / 0.00467;
