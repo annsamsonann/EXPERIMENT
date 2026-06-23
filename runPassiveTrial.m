@@ -1,13 +1,13 @@
-function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag, w, w1,flipSpeed, speedCm)
+function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag, w, w1,flipSpeed,speedCm)
 % ---------------------  PREPARE  ---------------------
 try
-    viewDistCm = 71;
-    screenWidthCm = 47;
-    ballDiamDeg = 1.0;
-    padCm = 0;
-    startArmMov = NaN;
-    threshold_cm = ExpConfig.encoderThreshold_cm;
-    responded = false ;
+
+
+
+
+
+
+
 
     buttonPushed = [];
     respTime = [];
@@ -26,28 +26,55 @@ try
     cmd = sprintf("S %d\n", speedStage);
     writeline(app.LinearStage_motor, cmd);
 
-    % SET the acceleration for the linear stage
-    cmd = sprintf("A %d\n", accStage);
-    writeline(app.LinearStage_motor, cmd);
-    
-    if no_motion_flag
-        printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
-        WaitSecs(1);
-    else
-        curClock = GetSecs;
-        while (GetSecs - curClock) < 1
-            showBall =true;
-            drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
-                false, speedCm, w, screenWidthCm, ballDiamDeg, ...
-                viewDistCm, padCm, startTrial, w, showBall);
-            drawnow limitrate
-            if app.stopGUI == 1
-                app.stopGUI = 0;
-                error('Experiment stopped');
-            end
+    curClock = GetSecs;
+    while (GetSecs - curClock) < 0.5
+        drawnow limitrate
+        if app.stopGUI == 1
+            app.stopGUI = 0;
+            error('Experiment stopped');
         end
     end
 
+    % SET the acceleration for the linear stage
+    cmd = sprintf("A %d\n", accStage);
+    writeline(app.LinearStage_motor, cmd);
+
+    curClock = GetSecs;
+    while (GetSecs - curClock) < 0.25
+        drawnow limitrate
+        if app.stopGUI == 1
+            app.stopGUI = 0;
+            error('Experiment stopped');
+        end
+    end
+
+    % ---------------------  PASSIVE MOTION CUE ---------------------
+    printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
+
+    curClock = GetSecs;
+    while (GetSecs - curClock) < 0.25
+        drawnow limitrate
+        if app.stopGUI == 1
+            app.stopGUI = 0;
+            error('Experiment stopped');
+        end
+    end
+
+    % ---------------------  MOTOR / STIM PREP ---------------------
+    write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
+        flipSpeed * trialRow.StimSpeed_arduino, ...
+        trialRow.StimDuration_arduino), "string");
+
+    curClock = GetSecs;
+    while (GetSecs - curClock) < 0.5
+        drawnow limitrate
+        if app.stopGUI == 1
+            app.stopGUI = 0;
+            error('Experiment stopped');
+        end
+    end
+
+    % ---------------------  PASSIVE ARM MOVEMENT ---------------------
     startArmMov = GetSecs;
     trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
 
@@ -63,21 +90,23 @@ try
 
     while true
         elapsed = GetSecs - startArmMov;
-        showBall = false;
-        if  ~no_motion_flag
-            drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
-                false, speedCm, w, screenWidthCm, ballDiamDeg, ...
-                viewDistCm, padCm, startTrial, w, showBall);
-        end 
+
+
+
+
+
+
         if ~stimStarted && elapsed >= app.stimLagSec
-            write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
-                flipSpeed * trialRow.StimSpeed_arduino, ...
-                trialRow.StimDuration_arduino), "string");
+
+
+
 
             startStim = GetSecs;
             trialRow.StimOnset = startStim - expTime_start;
             stimEndTime = startStim + stimDurSec;
             stimStarted = true;
+
+            printResponsePrompt(app, windowPtr);
 
             indentLoc = app.curIndent;
             write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
@@ -94,15 +123,15 @@ try
             if any(buttons)
                 buttonPushed = find(buttons ~= 0, 1);
                 respTime = GetSecs - startStim;
-                DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
+                DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
                 Screen('Flip', windowPtr);
-                
+
               %  break;
             end
 
             if GetSecs >= stimEndTime
-                DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
-                Screen('Flip', windowPtr);
+
+
                 break;
             end
         end
@@ -154,105 +183,12 @@ function printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag)
 % Passive trial, motor on (arm moved by motor)
 
 if ~no_motion_flag
-    textString = sprintf('Arm will be moved %s %s', w, w1);
+    textString = sprintf('Arm will be moved %s with %s speed', w, w1);
 else
-    textString = 'Arm will stay still';
+    textString = 'Arm will not be moved';
 end
 
 DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
 Screen('Flip', windowPtr);
-end
-
-   
-
-function drawInstructionCue(app, windowPtr, w, moveDurSec, ...
-    showResponsePrompt, speedCmPerSec, moveDir, screenWidthCm, ballDiamDeg, ...
-    viewDistCm, padCm, startCue, directionToMove, showBall)
-
-elapsed = mod(GetSecs - startCue, moveDurSec);
-if elapsed < 0
-    elapsed = 0;
-end
-
-textString = sprintf('Move %s %s', directionToMove, w);
-
-
-% Clear screen
-Screen('FillRect', windowPtr, [0 0 0]);
-
-% Window geometry
-[screenX, screenY] = Screen('WindowSize', windowPtr);
-centerX = screenX / 2;
-centerY = screenY / 2;
-
-% Text settings
-Screen('TextFont', windowPtr, 'Arial');
-Screen('TextSize', windowPtr, 28);
-Screen('TextStyle', windowPtr, 0);
-
-% Draw instruction text centered
-DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
-
-% Conversions
-pixPerCm = screenX / screenWidthCm;
-
-% Ball size: degrees -> cm -> pixels
-ballDiamCm = 2 * viewDistCm * tand(ballDiamDeg / 2);
-ballDiamPix = max(6, round(ballDiamCm * pixPerCm));
-ballRadiusPix = ballDiamPix / 2;
-
-% Motion distance
-dxCm = speedCmPerSec * elapsed;
-dxPix = dxCm * pixPerCm;
-
-totalDxCm = speedCmPerSec * moveDurSec;
-totalDxPix = totalDxCm * pixPerCm;
-
-% Padding corridor
-padPix = padCm * pixPerCm;
-leftBound  = padPix + ballRadiusPix;
-rightBound = screenX - padPix - ballRadiusPix;
-usableWidth = rightBound - leftBound;
-
-if totalDxPix > usableWidth
-    error('Motion path too long for screen width and chosen padding.');
-end
-
-% Center the full path within the padded corridor
-pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
-pathRight = rightBound - (usableWidth - totalDxPix) / 2;
-
-if strcmpi(moveDir, 'right')
-    ballX = pathLeft + dxPix;
-elseif strcmpi(moveDir, 'left')
-    ballX = pathRight - dxPix;
-else
-    error('moveDir must be ''left'' or ''right''.');
-end
-
-% Safety clamp
-ballX = max(leftBound, min(rightBound, ballX));
-
-% Ball below centered text
-ballY = centerY + 80;
-
-ballRect = [ballX - ballRadiusPix, ballY - ballRadiusPix, ...
-    ballX + ballRadiusPix, ballY + ballRadiusPix];
-
-% Draw ball if requested
-if showBall
-    Screen('FillOval', windowPtr, [255 0 0], ballRect);
-end
-
-Screen('Flip', windowPtr);
-end
-function printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag)
-if ~no_motion_flag
-    textString = sprintf('Arm will be moved %s %s ', w, w1);
-else
-    textString = 'Stay in the same position';
-end
-DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
-Screen('Flip', windowPtr);
-
+WaitSecs(1);
 end
