@@ -20,7 +20,12 @@ classdef ExpConfig
         fast_target_speed_steps = 1713 ; % round(8 / 0.00467);
         slow_target_speed_steps = 214; %round 1 / 0.00467;
 
-        ITI = 2; %sec
+        ITI = 2; 
+        viewDistCm = 71;
+        screenWidthCm = 47;
+        ballDiamDeg = 1.0;
+        padCm = 0;
+        %sec
         %These are the setting to make sure the stage moves to the next
         %start (or start at the beggining of the block) in  under 1.5 sec -
         %to fit in the ITI and blovk start que 

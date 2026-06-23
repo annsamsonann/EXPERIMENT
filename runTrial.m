@@ -4,6 +4,6 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
     accArduino = trialRow.Arm_Mov_Acc_arduino;
     stepsArduino = trialRow.Arm_Mov_Steps_arduino;
     [moveDir, speedStr, no_motion_flag] = getTrialInfo(app,stepsArduino,speedArduino);
-    
+    threshold_cm = ExpConfig.encoderThreshold_cm;
 
 end
