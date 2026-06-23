@@ -30,6 +30,7 @@ trialRow.TrialStart_time = startTrial - expTime_start;
 
 if no_motion_flag
     printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
+    WaitSecs(1);
     startArmMov = GetSecs;
     % trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
 else
@@ -106,6 +107,8 @@ while true
         if any(buttons)
             buttonPushed = find(buttons ~= 0, 1);
             respTime = GetSecs - startStim;
+            DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
+            Screen('Flip', windowPtr);
             break
             % if GetSecs >= stimEndTime 
             %     break;
@@ -113,6 +116,8 @@ while true
         end
 
         if GetSecs >= stimEndTime 
+            DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
+            Screen('Flip', windowPtr);
             break;
         end
     end
@@ -133,7 +138,7 @@ if indentMovedDown
     write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
 end 
 
-while GetSecs < stimEndTime % waitto show return cue if they have responded before stim end 
+while GetSecs < stimEndTime % wait to show return cue if they have responded before stim end 
     WaitSecs('YieldSecs', 0.001);
 end
 
@@ -165,7 +170,8 @@ if elapsed < 0
     elapsed = 0;
 end
 
-textString = sprintf('Move %s with %s speed', directionToMove, w);
+textString = sprintf('Move %s %s', directionToMove, w);
+
 
 % Clear screen
 Screen('FillRect', windowPtr, [0 0 0]);
@@ -244,7 +250,7 @@ else
 end
 DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
 Screen('Flip', windowPtr);
-WaitSecs(2);
+%WaitSecs(2);
 end
 
 
