@@ -1,4 +1,4 @@
-function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag,flipSpeed, speedCm, moveDir, speedStr)
+function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag, w, w1,flipSpeed, speedCm)
 % ---------------------  PREPARE  ---------------------
 try
     viewDistCm = 71;
@@ -8,17 +8,14 @@ try
     startArmMov = NaN;
     threshold_cm = ExpConfig.encoderThreshold_cm;
     responded = false ;
-    moveDurSec  = ExpConfig.StageMotionDur_sec;
 
     buttonPushed = [];
     respTime = [];
     encoderSamples = [];
     startStim = nan;
     stimEndTime = nan;
-    showResponsePrompt = false;
 
     stimStarted = false;
-
     %stim ident (?)
 
     % ---------------------  TRIAL ONSET  ---------------------
@@ -34,15 +31,15 @@ try
     writeline(app.LinearStage_motor, cmd);
     
     if no_motion_flag
-        printPassiveMotionCue(app, windowPtr, moveDir, wspeedWords, no_motion_flag);
+        printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
         WaitSecs(1);
     else
         curClock = GetSecs;
         while (GetSecs - curClock) < 1
             showBall =true;
-            drawInstructionCue(app, windowPtr, moveDurSec, ...
-                showResponsePrompt, speedCm, screenWidthCm, ballDiamDeg, ...
-                viewDistCm, padCm, startTrial, showBall, speedStr, moveDir)
+            drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
+                false, speedCm, w, screenWidthCm, ballDiamDeg, ...
+                viewDistCm, padCm, startTrial, w, showBall);
             drawnow limitrate
             if app.stopGUI == 1
                 app.stopGUI = 0;
@@ -68,9 +65,9 @@ try
         elapsed = GetSecs - startArmMov;
         showBall = false;
         if  ~no_motion_flag
-            drawInstructionCue(app, windowPtr, moveDurSec, ...
-                showResponsePrompt, speedCm, screenWidthCm, ballDiamDeg, ...
-                viewDistCm, padCm, startTrial, showBall, speedStr, moveDir)
+            drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
+                false, speedCm, w, screenWidthCm, ballDiamDeg, ...
+                viewDistCm, padCm, startTrial, w, showBall);
         end 
         if ~stimStarted && elapsed >= app.stimLagSec
             write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
@@ -168,16 +165,16 @@ end
 
    
 
-function drawInstructionCue(app, windowPtr, moveDurSec, ...
-    showResponsePrompt, speedCmPerSec, screenWidthCm, ballDiamDeg, ...
-    viewDistCm, padCm, startCue, showBall, speedStr, moveDir)
+function drawInstructionCue(app, windowPtr, w, moveDurSec, ...
+    showResponsePrompt, speedCmPerSec, moveDir, screenWidthCm, ballDiamDeg, ...
+    viewDistCm, padCm, startCue, directionToMove, showBall)
 
 elapsed = mod(GetSecs - startCue, moveDurSec);
 if elapsed < 0
     elapsed = 0;
 end
 
-textString = sprintf('Move %s %s', moveDir, speedStr);
+textString = sprintf('Move %s %s', directionToMove, w);
 
 
 % Clear screen
@@ -225,9 +222,9 @@ end
 pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
 pathRight = rightBound - (usableWidth - totalDxPix) / 2;
 
-if strcmpi(moveDir , 'right')
+if strcmpi(moveDir, 'right')
     ballX = pathLeft + dxPix;
-elseif strcmpi(moveDir , 'left')
+elseif strcmpi(moveDir, 'left')
     ballX = pathRight - dxPix;
 else
     error('moveDir must be ''left'' or ''right''.');
@@ -249,9 +246,6 @@ end
 
 Screen('Flip', windowPtr);
 end
-
-
-
 function printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag)
 if ~no_motion_flag
     textString = sprintf('Arm will be moved %s %s ', w, w1);
