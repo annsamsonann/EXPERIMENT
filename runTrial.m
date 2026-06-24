@@ -1,4 +1,4 @@
-function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_start) 
+function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_start) 
     isActive = trialRow.IsActive;
     speedCmSec = trialRow.Arm_Mov_Speed;
     speedArduino = trialRow.Arm_Mov_Speed_arduino;
