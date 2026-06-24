@@ -202,7 +202,7 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
     trialRow.EncoderSamples = {encoderSamples};
     trialRow.Response = buttonPushed;
     trialRow.ReactionTime = respTime;
-    trialRow.OnsetSample = onsetSample;
+    trialRow.OnsetSample = {onsetSample};
     updateCurrentSpeedDisplay(app, avgVelocity);
 end
 
