@@ -35,8 +35,14 @@ function S = generatePassiveCommands(activeBehavior)
     S.new_dist_fast_steps = round((S.avgFast * t) / cm_per_step);
     S.new_dist_slow_steps = round((S.avgSlow * t) / cm_per_step);
 
+    S.nFastTotal = sum(isFast);
+    S.nSlowTotal = sum(isSlow);
+
     S.nFastInRange = sum(FastTrialsGoodMask);
     S.nSlowInRange = sum(SlowTrialsGoodMask);
+    
+    S.pctFastInRange = 100 * S.nFastInRange / S.nFastTotal;
+    S.pctSlowInRange = 100 * S.nSlowInRange / S.nSlowTotal;
     if S.nFastInRange == 0
         warning('generatePassiveCommands:NoFastTrialsInRange', ...
         'No FAST trials passed the threshold; avgFast/new fast commands may be NaN.');
