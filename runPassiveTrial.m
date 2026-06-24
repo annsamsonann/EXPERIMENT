@@ -25,40 +25,40 @@ try
     % SET the speed for the linear stage
     cmd = sprintf("S %d\n", speedStage);
     writeline(app.LinearStage_motor, cmd);
-
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.5
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
-
-    % SET the acceleration for the linear stage
     cmd = sprintf("A %d\n", accStage);
     writeline(app.LinearStage_motor, cmd);
 
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.25
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.5
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
+
+    % SET the acceleration for the linear stage
+
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.25
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
 
     % ---------------------  PASSIVE MOTION CUE ---------------------
-    printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
+    % printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
 
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.25
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.25
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
 
     % ---------------------  MOTOR / STIM PREP ---------------------
     write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
@@ -85,7 +85,7 @@ try
     cmd = sprintf("M %d\n", stepsStage);
     writeline(app.LinearStage_motor, cmd);
 
-    stimDurSec = trialRow.StimDuration_arduino / 1000;
+    % stimDurSec = trialRow.StimDuration_arduino / 1000;
     app.stimLagSec = 0.25;
 
     while true

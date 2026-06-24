@@ -27,44 +27,44 @@ function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n
 % trialRow.TrialStart_time = startTrial - expTime_start;
 
 
-if no_motion_flag
-    printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
-    WaitSecs(1);
-    startArmMov = GetSecs;
-    % trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
-else
-    flushRotaryEncoderBuffer(app);
-    writeline(app.rotaryEncoder, "ZERO");
-    pause(0.05);
-    while true
-        showBall =true;
-        drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
-            false, speedToTrain, moveDir, screenWidthCm, ballDiamDeg, ...
-            viewDistCm, padCm, startTrial, moveDir, showBall);
+% if no_motion_flag
+%     printActiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
+%     WaitSecs(1);
+%     startArmMov = GetSecs;
 
-        newSamples = readAvailableEncoderSamples(app);
-        if ~isempty(newSamples)
-            if isnan(startArmMov)
-                idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
-                if ~isempty(idx)
-                    onsetSample = newSamples(idx,:);
-                    startArmMov = GetSecs;
-                    encoderSamples = newSamples(idx:end,:);   % optional
-                    break
-                end
-            end
-        end
+% else
+%     flushRotaryEncoderBuffer(app);
+%     writeline(app.rotaryEncoder, "ZERO");
+%     pause(0.05);
+%     while true
+%         showBall =true;
+%         drawInstructionCue(app, windowPtr, w1, ExpConfig.StageMotionDur_sec, ...
+%             false, speedToTrain, moveDir, screenWidthCm, ballDiamDeg, ...
+%             viewDistCm, padCm, startTrial, moveDir, showBall);
 
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
-end
-trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
+%         newSamples = readAvailableEncoderSamples(app);
+%         if ~isempty(newSamples)
+%             if isnan(startArmMov)
+%                 idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
+%                 if ~isempty(idx)
+%                     onsetSample = newSamples(idx,:);
+%                     startArmMov = GetSecs;
+%                     encoderSamples = newSamples(idx:end,:);   % optional
+%                     break
+%                 end
+%             end
+%         end
 
-stimDurSec = trialRow.StimDuration_arduino / 1000;
+%         drawnow limitrate
+%         if app.stopGUI == 1
+%             app.stopGUI = 0;
+%             error('Experiment stopped');
+%         end
+%     end
+% end
+% trialRow.Arm_Mov_Onset = startArmMov - expTime_start;
+
+% stimDurSec = trialRow.StimDuration_arduino / 1000;
 
 while true
     elapsed = GetSecs - startArmMov;
@@ -89,11 +89,7 @@ while true
         indentMovedDown = true;
     end
 
-    % if no_motion_flag
-    %     if stimStarted
-    %         printResponsePrompt(app, windowPtr);
-    %     end
-    % end 
+
 
     % collect encoder from arm movement onset onward
     newSamples = readAvailableEncoderSamples(app);
