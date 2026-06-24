@@ -1,4 +1,5 @@
 function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_start) 
+    isActive = trialRow.IsActive;
     speedCmSec = trialRow.Arm_Mov_Speed;
     speedArduino = trialRow.Arm_Mov_Speed_arduino;
     accArduino = trialRow.Arm_Mov_Acc_arduino;
@@ -11,12 +12,12 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
     buttonPushed = [];
     respTime = [];
     encoderSamples = [];
+    onsetSample =[];
     startStim = nan;
     stimEndTime = nan;
     startArmMov = NaN; 
     stimStarted = false;
     indentMovedDown = false;
-    responded = false ; 
     armMovStarted = false; 
 
     % ---------------------  TRIAL ONSET  ---------------------
@@ -46,6 +47,7 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
                     idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
                     if ~isempty(idx) %when a sample over the threshold was found 
                         encoderSamples = newSamples(idx:end,:);  
+                        onsetSample = newSamples(idx,:);
                         startArmMov = GetSecs;
                         armMovStarted = true; 
                         break
@@ -54,8 +56,8 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
                 end
             else % Passive
                 if ~motorCmdSent
-                    writeline(app.LinearStage_motor, sprintf("S %d\n", speedStage)); % if wrong speed - add pause between 
-                    writeline(app.LinearStage_motor, sprintf("A %d\n", accStage));
+                    writeline(app.LinearStage_motor, sprintf("S %d\n", speedArduino)); % if wrong speed - add pause between 
+                    writeline(app.LinearStage_motor, sprintf("A %d\n", accArduino));
                     motorCmdSent = true;
                 end
                 if GetSecs >= passiveCueDeadline
@@ -68,6 +70,7 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
                 app.stopGUI = 0;
                 error('Experiment stopped');
             end
+        
         end
     
     end 
@@ -76,7 +79,6 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
 
     if no_motion_flag % same active and passive,  no motion cue is still on until response or timeout 
         WaitSecs(stimLagSec); %0.25 sec to match motion trials 
-   
         indentLoc = app.curIndent;
         write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
         indentMovedDown = true;
@@ -90,6 +92,10 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
         stimStarted = true;
         if stimStarted
             while true
+                newSamples = readAvailableEncoderSamples(app);
+                if ~isempty(newSamples)
+                    encoderSamples = [encoderSamples; newSamples];
+                end
                 [~, ~, buttons] = GetMouse;
                 if any(buttons)
                     buttonPushed = find(buttons ~= 0, 1);
@@ -103,6 +109,12 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
                     Screen('Flip', windowPtr);
                     break
                 end
+                drawnow limitrate
+                if app.stopGUI == 1
+                    app.stopGUI = 0;
+                    error('Experiment stopped');
+                end
+                
             end
         end
         if indentMovedDown %move stim up after rotation is done 
@@ -113,19 +125,85 @@ function [trialRow] = runTrial(app, windowPtr, trialRow, flipSpeed, expTime_star
         if stimStarted && isempty(buttonPushed) % if did not respond before the end of stim rotation
             [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);
         end 
+
     else
+        showBall = false; 
+        stopCollectingSamples = false;
+
+        drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart); % timeCueStart is irrelevant here since the ball is not drawn, this just updates the screen, no redrawing 
+        if ~isActive 
+            cmd = sprintf("M %d\n", stepsArduino);
+            writeline(app.LinearStage_motor, cmd);
+        end 
+
+        while true
+            if ~stopCollectingSamples
+                newSamples = readAvailableEncoderSamples(app);
+                if ~isempty(newSamples)
+                    encoderSamples = [encoderSamples; newSamples];
+                end
+            end 
+
+            if GetSecs >= (stimLagSec + startArmMov) && ~stimStarted
+                indentLoc = app.curIndent;
+
+                write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
+                indentMovedDown = true;
+                write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
+                    flipSpeed * trialRow.StimSpeed_arduino, ...
+                    trialRow.StimDuration_arduino), "string");
+                startStim = GetSecs;
+                stimEndTime = startStim + stimDurSec;
+                stimStarted = true;
+            end
+
+            if stimStarted
+                [~, ~, buttons] = GetMouse;
+                if any(buttons)
+                    buttonPushed = find(buttons ~= 0, 1);
+                    respTime = GetSecs - startStim;
+                    DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
+                    Screen('Flip', windowPtr);
+                    stopCollectingSamples = true; 
+                end
+                if GetSecs >= stimEndTime
+                    DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
+                    Screen('Flip', windowPtr);
+                    break
+                end
+            end 
+            drawnow limitrate
+            if app.stopGUI == 1
+                app.stopGUI = 0;
+                error('Experiment stopped');
+            end
+        end 
+
+        if indentMovedDown %move stim up after rotation is done 
+            indentLoc = app.indentZero;
+            write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
+        end 
+
+        if stimStarted && isempty(buttonPushed) % if did not respond before the end of stim rotation
+            [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);
+        end 
+
+
 
     end
-    trialRow.StimOnset = startStim - expTime_start;
+    if ~stimStarted
+        trialRow.StimOnset = nan;
+    else
+        trialRow.StimOnset = startStim - expTime_start;
+    end
         
-        
-        
-    
-
-
-
-
-
+    avgVelocity = computeAverageEncoderVelocity(app, encoderSamples);
+    trialRow.MeasuredSpeed_cm_s = avgVelocity;
+    trialRow.EncoderSamples = {encoderSamples};
+    trialRow.Response = buttonPushed;
+    trialRow.ReactionTime = respTime;
+    trialRow.OnsetSample = onsetSample;
+    updateCurrentSpeedDisplay(app, avgVelocity);
 end
 
 function  printNoMotionCue(app, windowPtr,isActive)
