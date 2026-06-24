@@ -9,18 +9,18 @@ try
 
 
 
-    buttonPushed = [];
-    respTime = [];
-    encoderSamples = [];
-    startStim = nan;
-    stimEndTime = nan;
+    % buttonPushed = [];
+    % respTime = [];
+    % encoderSamples = [];
+    % startStim = nan;
+    % stimEndTime = nan;
 
-    stimStarted = false;
-    %stim ident (?)
+    % stimStarted = false;
 
-    % ---------------------  TRIAL ONSET  ---------------------
-    startTrial = GetSecs;
-    trialRow.TrialStart_time = startTrial - expTime_start;
+
+     % ---------------------  TRIAL ONSET  ---------------------
+    % startTrial = GetSecs;
+    % trialRow.TrialStart_time = startTrial - expTime_start;
 
     % SET the speed for the linear stage
     cmd = sprintf("S %d\n", speedStage);

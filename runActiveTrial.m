@@ -1,31 +1,30 @@
 function [trialRow, myTrialHistory] = runActiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag,  w, w1,flipSpeed)
 
-buttonPushed = [];
-respTime = [];
-encoderSamples = [];
-startStim = nan;
-stimEndTime = nan;
+% buttonPushed = [];
+% respTime = [];
+% encoderSamples = [];
+% startStim = nan;
+% stimEndTime = nan;
+% startArmMov = NaN; 
+% stimStarted = false;
+% indentMovedDown = false;
+% responded = false ; 
+% viewDistCm = 71;
+% screenWidthCm = 47;
+% ballDiamDeg = 1.0;
+% padCm = 0;
+% threshold_cm = ExpConfig.encoderThreshold_cm;
 
-stimStarted = false;
-indentMovedDown = false;
 
-viewDistCm = 71;
-screenWidthCm = 47;
-ballDiamDeg = 1.0;
-padCm = 0;
-startArmMov = NaN; 
-threshold_cm = ExpConfig.encoderThreshold_cm;
-responded = false ; 
-
-if w1 =="fast"
-    speedToTrain = ExpConfig.fast_target;
-elseif w1 == "slow"
-    speedToTrain = ExpConfig.slow_target;
-end 
-moveDir = w;
+% if w1 =="fast"
+%     speedToTrain = ExpConfig.fast_target;
+% elseif w1 == "slow"
+%     speedToTrain = ExpConfig.slow_target;
+% end 
+% moveDir = w;
     % ---------------------  TRIAL ONSET  ---------------------
-startTrial = GetSecs;
-trialRow.TrialStart_time = startTrial - expTime_start;
+% startTrial = GetSecs;
+% trialRow.TrialStart_time = startTrial - expTime_start;
 
 
 if no_motion_flag
