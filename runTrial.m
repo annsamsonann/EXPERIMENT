@@ -263,12 +263,20 @@ function drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, move
     % Center the full path within the padded corridor
     pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
     pathRight = rightBound - (usableWidth - totalDxPix) / 2;
+    % 
     if strcmpi(moveDir, 'right')
-        ballX = pathLeft + dxPix;
+        ballX = pathRight - dxPix;  % starts right, moves left  ← swap
     elseif strcmpi(moveDir, 'left')
-        ballX = pathRight - dxPix;
+        ballX = pathRight - dxPix; %ballX = pathLeft + dxPix;
+    % if strcmpi(moveDir, 'right')
+    %     ballX = pathLeft + dxPix;
+    %     fprintf('Move dir is in RIGHT: %s,', moveDir);
+    % elseif strcmpi(moveDir, 'left')
+    %     ballX = pathRight - dxPix;
+    %     fprintf('Move dir is in left: %s,', moveDir);
     else
         error('moveDir must be ''left'' or ''right''.');
+        fprintf('Move dir is in LEFT: ', moveDir);
     end
     % Safety clamp
     ballX = max(leftBound, min(rightBound, ballX));
