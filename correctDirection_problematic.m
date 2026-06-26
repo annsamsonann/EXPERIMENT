@@ -14,13 +14,15 @@ function [angle, flipSpin] = correctDirection(curArd, curAngle, desiredAngle)
     % This forces the cylinder to stay in the top arc and toggles the spin direction.
 
     % if the angle is from 0 to 180 -
-    if normDesiredAngle > 180
-        target = normDesiredAngle - 180; 
-        flipSpin = -1; % Reverse spin for bottom-half targets           
-    else
-        target = normDesiredAngle;       
-        flipSpin = 1;  % Normal spin for top-half targets           
-    end
+    % if normDesiredAngle > 180
+    %     target = normDesiredAngle - 180; 
+    %     flipSpin = -1; % Reverse spin for bottom-half targets           
+    % else
+    %     target = normDesiredAngle;       
+    %     flipSpin = 1;  % Normal spin for top-half targets           
+    % end
+    target = normDesiredAngle;
+flipSpin = 1; 
 
     % 3. Calculate relative movement
     delta = target - curAngle;
