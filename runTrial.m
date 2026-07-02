@@ -40,22 +40,57 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         startArmMov = GetSecs;
     else %present motion cue until motion sensed (active) or for 1 sec (passive) 
         motorCmdSent = false;
-        while ~armMovStarted 
-            showBall = true; 
+        seenZeroAfterReset = false;
+        zeroTol = 0.5;   % cm, adjust
+        cleanSamples = [];
+
+        while ~armMovStarted
+            showBall = true;
             drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart);
+
             if isActive
                 newSamples = readAvailableEncoderSamples(app);
-                if  ~isempty(newSamples) && isnan(startArmMov)
-                    idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
-                    if ~isempty(idx) %when a sample over the threshold was found 
-                        encoderSamples = newSamples(idx:end,:);  
-                        onsetSample = newSamples(idx,:);
-                        startArmMov = GetSecs;
-                        armMovStarted = true; 
-                        break
+               
+
+                if ~isempty(newSamples)
+                    if ~seenZeroAfterReset
+                        zidx = find(abs(newSamples(:,3)) <= zeroTol, 1, 'first');
+                        if ~isempty(zidx)
+                            seenZeroAfterReset = true;
+                            newSamples = newSamples(zidx:end,:);
+                        else
+                            newSamples = [];
+                        end
                     end
-          
+
+                    if ~isempty(newSamples)
+                        cleanSamples = [cleanSamples; newSamples];
+                        idx = find(abs(cleanSamples(:,3)) >= threshold_cm, 1, 'first');
+                        if ~isempty(idx)
+                            onsetSample = cleanSamples(1:idx,:);
+                            encoderSamples = cleanSamples(idx:end,:);
+                            startArmMov = GetSecs;
+                            armMovStarted = true;
+                            break
+                        end
+                    end
                 end
+        % while ~armMovStarted 
+        %     showBall = true; 
+        %     drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart);
+        %     if isActive
+        %         newSamples = readAvailableEncoderSamples(app);
+        %         if  ~isempty(newSamples) && isnan(startArmMov)
+        %             idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
+        %             if ~isempty(idx) %when a sample over the threshold was found 
+        %                 encoderSamples = newSamples(idx:end,:);  
+        %                 onsetSample = newSamples;
+        %                 startArmMov = GetSecs;
+        %                 armMovStarted = true; 
+        %                 break
+        %             end
+        % 
+        %         end
             else % Passive
                 if ~motorCmdSent
                     writeline(app.LinearStage_motor, sprintf("S %d\n", speedArduino)); % if wrong speed - add pause between 

@@ -31,6 +31,8 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
     flushRotaryEncoderBuffer(app);
     writeline(app.rotaryEncoder, "ZERO");
     pause(0.05);
+    flushRotaryEncoderBuffer(app); 
+
 
     if no_motion_flag %present no motion cue for 1 sec (same active and passive)
         printNoMotionCue(app, windowPtr,isActive);
@@ -39,21 +41,22 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
     else %present motion cue until motion sensed (active) or for 1 sec (passive) 
         motorCmdSent = false;
         while ~armMovStarted 
-            showBall = true; 
-            drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart);
-            if isActive
-                newSamples = readAvailableEncoderSamples(app);
-                if  ~isempty(newSamples) && isnan(startArmMov)
-                    idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
-                    if ~isempty(idx) %when a sample over the threshold was found 
-                        encoderSamples = newSamples(idx:end,:);  
-                        onsetSample = newSamples(idx,:);
-                        startArmMov = GetSecs;
-                        armMovStarted = true; 
-                        break
-                    end
-          
-                end
+        % while ~armMovStarted 
+        %     showBall = true; 
+        %     drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart);
+        %     if isActive
+        %         newSamples = readAvailableEncoderSamples(app);
+        %         if  ~isempty(newSamples) && isnan(startArmMov)
+        %             idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
+        %             if ~isempty(idx) %when a sample over the threshold was found 
+        %                 encoderSamples = newSamples(idx:end,:);  
+        %                 onsetSample = newSamples;
+        %                 startArmMov = GetSecs;
+        %                 armMovStarted = true; 
+        %                 break
+        %             end
+        % 
+        %         end
             else % Passive
                 if ~motorCmdSent
                     writeline(app.LinearStage_motor, sprintf("S %d\n", speedArduino)); % if wrong speed - add pause between 
@@ -264,26 +267,33 @@ function drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, move
     pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
     pathRight = rightBound - (usableWidth - totalDxPix) / 2;
     % 
-    if~isActive:
+    if ~isActive
         if strcmpi(moveDir, 'right')
             ballX = pathLeft + dxPix;    % starts LEFT, moves right →
         elseif strcmpi(moveDir, 'left')
-            ballX = pathRight - dxPix;  
-    % starts RIGHT, moves left ←
-    % if strcmpi(moveDir, 'right')
-    %     ballX = pathRight - dxPix;  % starts right, moves left  ← swap
-    % elseif strcmpi(moveDir, 'left')
-    %     ballX = pathRight - dxPix; %ballX = pathLeft + dxPix;
+            ballX = pathRight - dxPix;
+        else
+            error('moveDir must be ''left'' or ''right''.');
+            fprintf('Move dir is in LEFT: ', moveDir);
+        end
+    else
+        if strcmpi(moveDir, 'right')
+            ballX = pathRight - dxPix;  % starts right, moves left  ← swap
+        elseif strcmpi(moveDir, 'left')
+            ballX = pathRight - dxPix; %ballX = pathLeft + dxPix;
+
+        else
+            error('moveDir must be ''left'' or ''right''.');
+            fprintf('Move dir is in LEFT: ', moveDir);
+        end
+    end 
     % if strcmpi(moveDir, 'right')
     %     ballX = pathLeft + dxPix;
     %     fprintf('Move dir is in RIGHT: %s,', moveDir);
     % elseif strcmpi(moveDir, 'left')
     %     ballX = pathRight - dxPix;
     %     fprintf('Move dir is in left: %s,', moveDir);
-    else
-        error('moveDir must be ''left'' or ''right''.');
-        fprintf('Move dir is in LEFT: ', moveDir);
-    end
+  
     % Safety clamp
     ballX = max(leftBound, min(rightBound, ballX));
     % Ball below centered text
