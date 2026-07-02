@@ -31,6 +31,8 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
     flushRotaryEncoderBuffer(app);
     writeline(app.rotaryEncoder, "ZERO");
     pause(0.05);
+    flushRotaryEncoderBuffer(app); 
+
 
     if no_motion_flag %present no motion cue for 1 sec (same active and passive)
         printNoMotionCue(app, windowPtr,isActive);
