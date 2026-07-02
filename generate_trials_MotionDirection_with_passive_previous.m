@@ -25,7 +25,7 @@ ITI = ExpConfig.ITI;
 blocks_per_posture = 16; % 8 active + 8 passive
 trials_per_block_per_type = 6; % 16 directions * 3 speeds = 48 trials per type, so 48/8 = 6
 n_active_blocks = blocks_per_posture / 2;
-n_passive_blocks = blocks_per_posture / 2;
+%n_passive_blocks = blocks_per_posture / 2;
 
 if mod(blocks_per_posture, 2) ~= 0
     error('blocks_per_posture must be even.');
@@ -42,7 +42,7 @@ VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'Arm_Mov_dur
     'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
     'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', ...
     'StimIndentation_arduino', 'InterTrialInterval', 'Response', 'ReactionTime', ...
-    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples',' AbsExpStart', 'AbsTrialStart', 'OnsetSample'};
+    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample'};
 
 VarType = {'double', 'double', 'string', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
@@ -130,6 +130,9 @@ for post = 1:length(armPosture)
 
     % start on negative-side turn or positive-side turn
     wantNegTurn = rand < 0.5;
+%     When both motion and zero are available → weighted 64/36 pick
+%     When only one remains → takes it without a random draw
+%     Fallback cases
 
     while ~isempty(negRows) || ~isempty(posRows) || ~isempty(zeroRows)
 
@@ -149,7 +152,15 @@ for post = 1:length(armPosture)
                 posRows(idx,:) = [];
                 wantNegTurn = true;   % still waiting for a negative real move
             else
-                pickType = choices{randi(length(choices))};
+                if length(choices) == 2
+                    if rand < 0.64
+                        pickType = choices{1};  % motion
+                    else
+                        pickType = choices{2};  % zero
+                    end
+                else
+                    pickType = choices{1};  % only one option, no choice
+                end
 
                 if strcmp(pickType,'neg')
                     idx = randi(size(negRows,1));
@@ -180,7 +191,16 @@ for post = 1:length(armPosture)
                 negRows(idx,:) = [];
                 wantNegTurn = false;  % still waiting for a positive real move
             else
-                pickType = choices{randi(length(choices))};
+                if length(choices) == 2
+                    if rand < 0.64
+                        pickType = choices{1};  % motion
+                    else
+                        pickType = choices{2};  % zero
+                    end
+                else
+                    pickType = choices{1};  % only one option, no choice
+                end
+                %pickType = choices{randi(length(choices))};
 
                 if strcmp(pickType,'pos')
                     idx = randi(size(posRows,1));
@@ -199,34 +219,26 @@ for post = 1:length(armPosture)
 
     activeRows = finalActive;
     trialsPerActiveBlock = size(activeRows,1) / n_active_blocks;   % 60
-    trialsPerPassiveBlock = size(passiveRows,1) / n_passive_blocks; % 60
+    %trialsPerPassiveBlock = size(passiveRows,1) / n_passive_blocks; % 60
 
-    if mod(trialsPerActiveBlock,1) ~= 0 || mod(trialsPerPassiveBlock,1) ~= 0
-        error('Trials per block must be integer.');
-    end
+    % if mod(trialsPerActiveBlock,1) ~= 0 || mod(trialsPerPassiveBlock,1) ~= 0
+    %     error('Trials per block must be integer.');
+    % end
 
     activeStart = 1;
-    passiveStart = 1;
+    %passiveStart = 1;
+    blockCounter = 0 ;
 
-    for bb = 1:blocks_per_posture
+    for bb = 1:n_active_blocks
 
-        if mod(bb,2) == 1
-            globalPairID = globalPairID + 1;
-            pairID = globalPairID;
-            blockTypeStr = 'ACTIVE';
-            isActiveBlock = 1;
+        globalPairID = globalPairID + 1;
+        pairID = globalPairID;
+        blockTypeStr = 'ACTIVE';
+        isActiveBlock = 1;
 
-            blockRows = activeRows(activeStart:activeStart+trialsPerActiveBlock-1, :);
-            activeStart = activeStart + trialsPerActiveBlock;
+        blockRows = activeRows(activeStart:activeStart+trialsPerActiveBlock-1, :);
+        activeStart = activeStart + trialsPerActiveBlock;
 
-        else
-            pairID = globalPairID;
-            blockTypeStr = 'PASSIVE';
-            isActiveBlock = 0;
-
-            blockRows = passiveRows(passiveStart:passiveStart+trialsPerPassiveBlock-1, :);
-            passiveStart = passiveStart + trialsPerPassiveBlock;
-        end
 
         nTrials = size(blockRows,1);
 
@@ -305,17 +317,42 @@ for post = 1:length(armPosture)
             TrialStim_param.AbsTrialStart(n) = nan;
             TrialStim_param.OnsetSample(n) = {[]};
         end
+        blockCounter = blockCounter + 1;
+        activeBlockNum = blockCounter;
 
         fileName = fullfile(outDir, ...
             [subjID '_' taskType ...
             '_ElbowPosture_' num2str(currentPosture) ...
             '_pair_' sprintf('%02d', pairID) ...
-            '_block_' sprintf('%02d', bb) ...
+            '_block_' sprintf('%02d', activeBlockNum) ...
             '_' blockTypeStr '.mat']);
 
         save(fileName, 'TrialStim_param');
         disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
             num2str(currentPosture) ' saved'])
+
+        % Create matching passive block
+        passiveTrial_param = TrialStim_param;
+        passiveTrial_param.IsActive(:) = 0;
+
+
+        % Randomly permute trial order
+        randIdx = randperm(height(passiveTrial_param));
+        passiveTrial_param = passiveTrial_param(randIdx, :);
+        % Reset trial numbers to match new order
+        passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
+        blockCounter = blockCounter + 1;
+        passiveBlockNum = blockCounter;
+
+
+        passiveFileName = fullfile(outDir, ...
+            [subjID '_' taskType ...
+            '_ElbowPosture_' num2str(currentPosture) ...
+            '_pair_' sprintf('%02d', pairID) ...
+            '_block_' sprintf('%02d', passiveBlockNum) ...
+            '_PASSIVE.mat']);
+        TrialStim_param = passiveTrial_param;
+        save(passiveFileName, 'TrialStim_param');
+        disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
     end
-end
 end
