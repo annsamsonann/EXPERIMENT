@@ -1,57 +1,64 @@
-function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag, w, w1,flipSpeed)
+function [trialRow, myTrialHistory] = runPassiveTrial(app, windowPtr, trialRow, n, expTime_start, myTrialHistory,speedStage,accStage,stepsStage,no_motion_flag, w, w1,flipSpeed,speedCm)
 % ---------------------  PREPARE  ---------------------
 try
 
-    buttonPushed = [];
-    respTime = [];
-    encoderSamples = [];
-    startStim = nan;
-    stimEndTime = nan;
 
-    stimStarted = false;
-    %stim ident (?)
 
-    % ---------------------  TRIAL ONSET  ---------------------
-    startTrial = GetSecs;
-    trialRow.TrialStart_time = startTrial - expTime_start;
+
+
+
+
+
+    % buttonPushed = [];
+    % respTime = [];
+    % encoderSamples = [];
+    % startStim = nan;
+    % stimEndTime = nan;
+
+    % stimStarted = false;
+
+
+     % ---------------------  TRIAL ONSET  ---------------------
+    % startTrial = GetSecs;
+    % trialRow.TrialStart_time = startTrial - expTime_start;
 
     % SET the speed for the linear stage
     cmd = sprintf("S %d\n", speedStage);
     writeline(app.LinearStage_motor, cmd);
-
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.5
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
-
-    % SET the acceleration for the linear stage
     cmd = sprintf("A %d\n", accStage);
     writeline(app.LinearStage_motor, cmd);
 
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.25
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.5
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
+
+    % SET the acceleration for the linear stage
+
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.25
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
 
     % ---------------------  PASSIVE MOTION CUE ---------------------
-    printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
+    % printPassiveMotionCue(app, windowPtr, w, w1, no_motion_flag);
 
-    curClock = GetSecs;
-    while (GetSecs - curClock) < 0.25
-        drawnow limitrate
-        if app.stopGUI == 1
-            app.stopGUI = 0;
-            error('Experiment stopped');
-        end
-    end
+    % curClock = GetSecs;
+    % while (GetSecs - curClock) < 0.25
+    %     drawnow limitrate
+    %     if app.stopGUI == 1
+    %         app.stopGUI = 0;
+    %         error('Experiment stopped');
+    %     end
+    % end
 
     % ---------------------  MOTOR / STIM PREP ---------------------
     write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
@@ -78,13 +85,22 @@ try
     cmd = sprintf("M %d\n", stepsStage);
     writeline(app.LinearStage_motor, cmd);
 
-    stimDurSec = trialRow.StimDuration_arduino / 1000;
+    % stimDurSec = trialRow.StimDuration_arduino / 1000;
     app.stimLagSec = 0.25;
 
     while true
         elapsed = GetSecs - startArmMov;
 
+
+
+
+
+
         if ~stimStarted && elapsed >= app.stimLagSec
+
+
+
+
             startStim = GetSecs;
             trialRow.StimOnset = startStim - expTime_start;
             stimEndTime = startStim + stimDurSec;
@@ -109,10 +125,13 @@ try
                 respTime = GetSecs - startStim;
                 DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
                 Screen('Flip', windowPtr);
+
               %  break;
             end
 
             if GetSecs >= stimEndTime
+
+
                 break;
             end
         end
@@ -173,5 +192,3 @@ DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
 Screen('Flip', windowPtr);
 WaitSecs(1);
 end
-
-   

@@ -1,31 +1,33 @@
 function generate_trials_MotionDirection_with_passive(parDir, subjID, taskType)
+
 fast_speed = ExpConfig.fast_target;
 slow_speed = ExpConfig.slow_target;
-
 pickArmMovSpeed = [0 slow_speed fast_speed]; % cm/s: no motion, slow, fast
 pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];
 armPosture = [90 53 15];
-isActiveLevels = [0 1];
+isActiveLevels = [1];
 nRepPerCondition = 10;
 
 pickArmMovSpeed_arduino = [0 ExpConfig.slow_target_speed_steps ExpConfig.fast_target_speed_steps];
 pickArmMovAcc_arduino = pickArmMovSpeed .* ExpConfig.acc_constant;
 pickArmMovSteps_arduino = round(pickArmMovSpeed_arduino .* ExpConfig.StageMotionDur_sec);
+
 durationArm_mov = ExpConfig.StageMotionDur_sec;
 
 tactileMotion_speed = 30; % cm/s
 tactileMotion_stimIndent = 1; % mm
 tactileMotion_duration = 1.5; % s
+
 tactileMotion_speed_arduino = 600;
 tactileMotion_indent_arduino = 1200;
 tactileMotion_duration_arduino = tactileMotion_duration * 1000;
 
 ITI = ExpConfig.ITI;
 
-blocks_per_posture = 16; % 8 active + 8 passive
+blocks_per_posture = 12; % 8 active + 8 passive
 trials_per_block_per_type = 6; % 16 directions * 3 speeds = 48 trials per type, so 48/8 = 6
 n_active_blocks = blocks_per_posture / 2;
-n_passive_blocks = blocks_per_posture / 2;
+% n_passive_blocks = blocks_per_posture / 2;
 
 if mod(blocks_per_posture, 2) ~= 0
     error('blocks_per_posture must be even.');
@@ -42,19 +44,19 @@ VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'Arm_Mov_dur
     'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
     'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', ...
     'StimIndentation_arduino', 'InterTrialInterval', 'Response', 'ReactionTime', ...
-    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples'};
+    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample'};
 
 VarType = {'double', 'double', 'string', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'cell'};
+    'double', 'double', 'double', 'double', 'cell', 'double', 'double', 'cell'};
 
 % =========================
 % 1) Build master trial matrix
 % =========================
 master = [];
-for ia = 1:length(isActiveLevels)
+for ia = 1:length(isActiveLevels) % create only active first 
     for ip = 1:length(armPosture)
         for is = 1:length(pickArmMovSpeed)
             for id = 1:length(pickStimDirection_trial)
@@ -81,23 +83,8 @@ end
 % 6 ArmMovSign
 
 % =========================
-% 2) Assign signs
+% 2) Assign signs (still balanced overall)
 % =========================
-
-% Passive trials: balanced +/- among moving trials, random
-passiveMovIdx = find(master(:,1) == 0 & master(:,3) ~= 0);
-if mod(length(passiveMovIdx),2) ~= 0
-    error('Passive moving trials must be even.');
-end
-passiveMovIdx = passiveMovIdx(randperm(length(passiveMovIdx)));
-master(passiveMovIdx(1:length(passiveMovIdx)/2), 6) = -1;
-master(passiveMovIdx(length(passiveMovIdx)/2+1:end), 6) = 1;
-
-% Passive no-motion trials
-master(master(:,1) == 0 & master(:,3) == 0, 6) = 0;
-
-
-% Active trials: alternate signs among moving trials, ignoring no-motion
 activeMovIdx = find(master(:,1) == 1 & master(:,3) ~= 0);
 if mod(length(activeMovIdx),2) ~= 0
     error('Active moving trials must be even.');
@@ -106,127 +93,35 @@ activeMovIdx = activeMovIdx(randperm(length(activeMovIdx)));
 master(activeMovIdx(1:length(activeMovIdx)/2), 6) = -1;
 master(activeMovIdx(length(activeMovIdx)/2+1:end), 6) = 1;
 
-
+% =========================
 % 3) Export by posture and block
 % =========================
 globalPairID = 0;
 
 for post = 1:length(armPosture)
-
     currentPosture = armPosture(post);
 
+    % Select active rows for this posture
     activeRows = master(master(:,1) == 1 & master(:,2) == currentPosture, :);
-    passiveRows = master(master(:,1) == 0 & master(:,2) == currentPosture, :);
 
-    % Shuffle passive freely
-    passiveRows = passiveRows(randperm(size(passiveRows,1)), :);
+    % Fully randomize active trials for this posture
+    activeRows = activeRows(randperm(size(activeRows,1)), :);  % shuffle rows [web:1][web:4]
 
-    % Build ACTIVE order with alternating sign logic in final exported sequence
-    negRows  = activeRows(activeRows(:,6) < 0, :);
-    posRows  = activeRows(activeRows(:,6) > 0, :);
-    zeroRows = activeRows(activeRows(:,6) == 0, :);
-
-    finalActive = [];
-
-    % start on negative-side turn or positive-side turn
-    wantNegTurn = rand < 0.5;
-
-    while ~isempty(negRows) || ~isempty(posRows) || ~isempty(zeroRows)
-
-        if wantNegTurn
-            choices = {};
-            if ~isempty(negRows)
-                choices{end+1} = 'neg';
-            end
-            if ~isempty(zeroRows)
-                choices{end+1} = 'zero';
-            end
-
-            % fallback: if neither neg nor zero remains, must use pos
-            if isempty(choices)
-                idx = randi(size(posRows,1));
-                finalActive = [finalActive; posRows(idx,:)];
-                posRows(idx,:) = [];
-                wantNegTurn = true;   % still waiting for a negative real move
-            else
-                pickType = choices{randi(length(choices))};
-
-                if strcmp(pickType,'neg')
-                    idx = randi(size(negRows,1));
-                    finalActive = [finalActive; negRows(idx,:)];
-                    negRows(idx,:) = [];
-                    wantNegTurn = false;   % next real move should be positive
-                else
-                    idx = randi(size(zeroRows,1));
-                    finalActive = [finalActive; zeroRows(idx,:)];
-                    zeroRows(idx,:) = [];
-                    % stay on same turn because no-motion does not flip sign expectation
-                end
-            end
-
-        else
-            choices = {};
-            if ~isempty(posRows)
-                choices{end+1} = 'pos';
-            end
-            if ~isempty(zeroRows)
-                choices{end+1} = 'zero';
-            end
-
-            % fallback: if neither pos nor zero remains, must use neg
-            if isempty(choices)
-                idx = randi(size(negRows,1));
-                finalActive = [finalActive; negRows(idx,:)];
-                negRows(idx,:) = [];
-                wantNegTurn = false;  % still waiting for a positive real move
-            else
-                pickType = choices{randi(length(choices))};
-
-                if strcmp(pickType,'pos')
-                    idx = randi(size(posRows,1));
-                    finalActive = [finalActive; posRows(idx,:)];
-                    posRows(idx,:) = [];
-                    wantNegTurn = true;   % next real move should be negative
-                else
-                    idx = randi(size(zeroRows,1));
-                    finalActive = [finalActive; zeroRows(idx,:)];
-                    zeroRows(idx,:) = [];
-                    % stay on same turn because no-motion does not flip sign expectation
-                end
-            end
-        end
-    end
-
-    activeRows = finalActive;
     trialsPerActiveBlock = size(activeRows,1) / n_active_blocks;   % 60
-    trialsPerPassiveBlock = size(passiveRows,1) / n_passive_blocks; % 60
-
-    if mod(trialsPerActiveBlock,1) ~= 0 || mod(trialsPerPassiveBlock,1) ~= 0
-        error('Trials per block must be integer.');
-    end
 
     activeStart = 1;
-    passiveStart = 1;
+    blockCounter = 0;
 
-    for bb = 1:blocks_per_posture
+    for bb = 1:n_active_blocks
 
-        if mod(bb,2) == 1
-            globalPairID = globalPairID + 1;
-            pairID = globalPairID;
-            blockTypeStr = 'ACTIVE';
-            isActiveBlock = 1;
+        globalPairID = globalPairID + 1;
+        pairID = globalPairID;
 
-            blockRows = activeRows(activeStart:activeStart+trialsPerActiveBlock-1, :);
-            activeStart = activeStart + trialsPerActiveBlock;
+        blockTypeStr = 'ACTIVE';
+        isActiveBlock = 1;
 
-        else
-            pairID = globalPairID;
-            blockTypeStr = 'PASSIVE';
-            isActiveBlock = 0;
-
-            blockRows = passiveRows(passiveStart:passiveStart+trialsPerPassiveBlock-1, :);
-            passiveStart = passiveStart + trialsPerPassiveBlock;
-        end
+        blockRows = activeRows(activeStart:activeStart+trialsPerActiveBlock-1, :);
+        activeStart = activeStart + trialsPerActiveBlock;
 
         nTrials = size(blockRows,1);
 
@@ -247,6 +142,7 @@ for post = 1:length(armPosture)
             TrialStim_param.StimDuration(n) = tactileMotion_duration;
             TrialStim_param.StimIndentation(n) = tactileMotion_stimIndent;
             TrialStim_param.StimOnset(n) = nan;
+
             TrialStim_param.StimDirection_arduino(n) = stimDir;
             TrialStim_param.StimSpeed_arduino(n) = tactileMotion_speed_arduino;
             TrialStim_param.StimDuration_arduino(n) = tactileMotion_duration_arduino;
@@ -277,16 +173,20 @@ for post = 1:length(armPosture)
 
             elseif armSign < 0
                 TrialStim_param.Arm_Mov_Speed(n) = -abs(armSpeedAbs);
+
                 TrialStim_param.Arm_mov_StartPosition(n) = 0;
                 TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = -1 * pickArmMovSteps_arduino(ardIdx);
+
                 TrialStim_param.ArmDirection(n) = "Left to Right";
 
             else
                 TrialStim_param.Arm_Mov_Speed(n) = abs(armSpeedAbs);
+
                 TrialStim_param.Arm_mov_StartPosition(n) = 1;
                 TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = pickArmMovSteps_arduino(ardIdx);
+
                 TrialStim_param.ArmDirection(n) = "Right to Left";
             end
 
@@ -301,18 +201,52 @@ for post = 1:length(armPosture)
             TrialStim_param.IsActive(n) = isActiveBlock;
             TrialStim_param.MeasuredSpeed_cm_s(n) = nan;
             TrialStim_param.EncoderSamples(n) = {[]};
+            TrialStim_param.AbsExpStart(n) = nan;
+            TrialStim_param.AbsTrialStart(n) = nan;
+            TrialStim_param.OnsetSample(n) = {[]};
         end
+
+        blockCounter = blockCounter + 1;
+        activeBlockNum = blockCounter;
 
         fileName = fullfile(outDir, ...
             [subjID '_' taskType ...
             '_ElbowPosture_' num2str(currentPosture) ...
             '_pair_' sprintf('%02d', pairID) ...
-            '_block_' sprintf('%02d', bb) ...
+            '_block_' sprintf('%02d', activeBlockNum) ...
             '_' blockTypeStr '.mat']);
 
         save(fileName, 'TrialStim_param');
         disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
             num2str(currentPosture) ' saved'])
+
+        % Create matching passive block
+        passiveTrial_param = TrialStim_param;
+        passiveTrial_param.IsActive(:) = 0;
+
+        % Randomly permute trial order within passive (fully random)
+        randIdx = randperm(height(passiveTrial_param));  % shuffle table rows [web:4][web:16]
+        passiveTrial_param = passiveTrial_param(randIdx, :);
+
+        % Reset trial numbers to match new order
+        passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
+
+        blockCounter = blockCounter + 1;
+        passiveBlockNum = blockCounter;
+
+        passiveFileName = fullfile(outDir, ...
+            [subjID '_' taskType ...
+            '_ElbowPosture_' num2str(currentPosture) ...
+            '_pair_' sprintf('%02d', pairID) ...
+            '_block_' sprintf('%02d', passiveBlockNum) ...
+            '_PASSIVE.mat']);
+
+        TrialStim_param = passiveTrial_param;
+        save(passiveFileName, 'TrialStim_param');
+
+        disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
+
     end
 end
+
 end

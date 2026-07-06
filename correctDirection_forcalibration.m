@@ -1,13 +1,21 @@
-function angle = correctDirection_forcalibration(curArd,curAngle,desiredAngle)
+function angle = correctDirection_forcalibration(curArd,desiredAngle)
     fullRevSteps = 6400; 
     mtrNum = 1;
 
-    % 1. Determine Direction (Based on your Arduino logic: 1=CCW, 0=CW)
+
+    % 1. Determine Direction (Based on your Arduino logic: 0=CCW, 1=CW)
     if desiredAngle < 0
-        dirSteps = 1; % Negative = Counter-Clockwise
+        dirSteps = 0;
     else
-        dirSteps = 0; % Positive = Clockwise
+        dirSteps = 1;
     end
+    % 
+    % % 1. Determine Direction (Based on your Arduino logic: 1=CCW, 0=CW)
+    % if desiredAngle < 0
+    %     dirSteps = 1; % Negative = Counter-Clockwise
+    % else
+    %     dirSteps = 0; % Positive = Clockwise
+    % end
 
     % 2. Calculate Steps based purely on the input amount
     steps = round(abs(desiredAngle) * (fullRevSteps / 360));

@@ -1,7 +1,58 @@
 %function that rotates the wheel across different angles
 % function angle = correctDirection(curArd,curAngle,desiredAngle)    
 function [angle, flipSpin] = correctDirection(curArd, curAngle, desiredAngle)
-   
+    % % fullRevSteps = 6400;   % your system setting
+    % % mtrNum = 1;
+    % % 
+    % % desiredAngle = -1 * desiredAngle; %making clockwise (negative values), and counterclockwise positive
+    % % 
+    % % angle = (curAngle - desiredAngle);
+    % % if angle < 0
+    % %     dirSteps = 0;
+    % % else
+    % %     dirSteps = 1;
+    % % end
+    % % steps = round(fullRevSteps / (360 / abs(angle)));
+    % % cmd = sprintf("%d %d %d %d\n", 6, mtrNum, dirSteps, steps);
+    % % write(curArd, cmd, "string");
+    % % pause(.1);
+    % 
+    % fullRevSteps = 6400; 
+    % mtrNum = 1;
+    % 
+    % % 1. Normalize angle to 0-359
+    % normAngle = mod(desiredAngle, 360); 
+    % 
+    % % 2. Flip Logic (to stay within 0-180 physical arc)
+    % if normAngle > 180
+    %     target = normAngle - 180; 
+    %     flipSpin = -1;            
+    % else
+    %     target = normAngle;       
+    %     flipSpin = 1;             
+    % end
+    % 
+    % 
+    % % 3. Calculate trip
+    % delta = target - curAngle;
+    % 
+    % % 4. DIRECTION FIX:
+    % % Based on your description, we need to swap these:
+    % if delta >= 0
+    %     dirSteps = 0; % Change this to 0 if 1 was going the wrong way
+    % else
+    %     dirSteps = 1; % Change this to 1 if 0 was going the wrong way
+    % end
+    % 
+    % % 5. Move Motor
+    % steps = round(abs(delta) * (fullRevSteps / 360));
+    % if steps > 0
+    %     % Added \n and space formatting for Serial.parseInt()
+    %     cmd = sprintf("%d %d %d %d\n", 6, mtrNum, dirSteps, steps);
+    %     writeline(curArd, cmd);
+    % end
+    % 
+    % angle = target; 
 
     % Configuration
     fullRevSteps = 6400; 

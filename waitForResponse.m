@@ -6,7 +6,7 @@ function [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim)
         if any(buttons)
             buttonPushed = find(buttons ~= 0, 1);
             respTime = GetSecs - startStim;
-            DrawFormattedText(windowPtr, 'Wait...', 'center', 'center', [255 255 255]);
+            DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
             Screen('Flip', windowPtr);
 
             return
