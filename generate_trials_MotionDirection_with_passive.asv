@@ -1,0 +1,255 @@
+function generate_trials_MotionDirection_with_passive(parDir, subjID, taskType)
+
+fast_speed = ExpConfig.fast_target;
+slow_speed = ExpConfig.slow_target;
+pickArmMovSpeed = [0 slow_speed fast_speed]; % cm/s: no motion, slow, fast
+pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];
+armPosture = [90 53 15];
+isActiveLevels = [1];
+nRepPerCondition = 10;
+
+pickArmMovSpeed_arduino = [0 ExpConfig.slow_target_speed_steps ExpConfig.fast_target_speed_steps];
+pickArmMovAcc_arduino = pickArmMovSpeed .* ExpConfig.acc_constant;
+pickArmMovSteps_arduino = round(pickArmMovSpeed_arduino .* ExpConfig.StageMotionDur_sec);
+
+durationArm_mov = ExpConfig.StageMotionDur_sec;
+
+tactileMotion_speed = 30; % cm/s
+tactileMotion_stimIndent = 1; % mm
+tactileMotion_duration = 1.5; % s
+
+tactileMotion_speed_arduino = 600;
+tactileMotion_indent_arduino = 1200;
+tactileMotion_duration_arduino = tactileMotion_duration * 1000;
+
+ITI = ExpConfig.ITI;
+
+blocks_per_posture = 12; % 8 active + 8 passive
+trials_per_block_per_type = 6; % 16 directions * 3 speeds = 48 trials per type, so 48/8 = 6
+n_active_blocks = blocks_per_posture / 2;
+% n_passive_blocks = blocks_per_posture / 2;
+
+if mod(blocks_per_posture, 2) ~= 0
+    error('blocks_per_posture must be even.');
+end
+
+outDir = fullfile(parDir, subjID);
+if ~isfolder(outDir)
+    mkdir(outDir);
+end
+%Arm_Mov_Onset_Trial -onset of arm motion relative to start of the trial
+%Measured_Arm_Mov_Duration_s
+%Measured_Arm_Mov_Dist_cm
+VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'Arm_Mov_duration', 'Arm_Mov_Onset', ...
+    'StimDirection', 'Stim_Speed', 'StimDuration', 'StimIndentation', 'StimOnset', 'HandPosture', ...
+    'Arm_mov_StartPosition', 'Arm_mov_StartPosition_arduino', 'Arm_Mov_Speed_arduino', ...
+    'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
+    'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', ...
+    'StimIndentation_arduino', 'InterTrialInterval', 'Response', 'ReactionTime', ...
+    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample','isRep','Arm_Mov_Onset_Trial','Measured_Arm_Mov_Duration_s','Measured_Arm_Mov_Dist_cm'};
+
+VarType = {'double', 'double', 'string', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'cell', 'double', 'double', 'cell','double','double'};
+
+% =========================
+% 1) Build master trial matrix
+% =========================
+master = [];
+for ia = 1:length(isActiveLevels) % create only active first 
+    for ip = 1:length(armPosture)
+        for is = 1:length(pickArmMovSpeed)
+            for id = 1:length(pickStimDirection_trial)
+                for ir = 1:nRepPerCondition
+                    master = [master; ...
+                        isActiveLevels(ia), ...   % col 1: IsActive
+                        armPosture(ip), ...       % col 2: HandPosture
+                        pickArmMovSpeed(is), ...  % col 3: ArmSpeedAbs
+                        pickStimDirection_trial(id), ... % col 4: StimDirection
+                        ir, ...                   % col 5: Rep
+                        0];                       % col 6: ArmMovSign (to assign later)
+                end
+            end
+        end
+    end
+end
+
+% master columns:
+% 1 IsActive
+% 2 HandPosture
+% 3 ArmSpeedAbs
+% 4 StimDirection
+% 5 Rep
+% 6 ArmMovSign
+
+% =========================
+% 2) Assign signs (still balanced overall)
+% =========================
+activeMovIdx = find(master(:,1) == 1 & master(:,3) ~= 0);
+if mod(length(activeMovIdx),2) ~= 0
+    error('Active moving trials must be even.');
+end
+activeMovIdx = activeMovIdx(randperm(length(activeMovIdx)));
+master(activeMovIdx(1:length(activeMovIdx)/2), 6) = -1;
+master(activeMovIdx(length(activeMovIdx)/2+1:end), 6) = 1;
+
+% =========================
+% 3) Export by posture and block
+% =========================
+globalPairID = 0;
+
+for post = 1:length(armPosture)
+    currentPosture = armPosture(post);
+
+    % Select active rows for this posture
+    activeRows = master(master(:,1) == 1 & master(:,2) == currentPosture, :);
+
+    % Fully randomize active trials for this posture
+    activeRows = activeRows(randperm(size(activeRows,1)), :);  % shuffle rows [web:1][web:4]
+
+    trialsPerActiveBlock = size(activeRows,1) / n_active_blocks;   % 60
+
+    activeStart = 1;
+    blockCounter = 0;
+
+    for bb = 1:n_active_blocks
+
+        globalPairID = globalPairID + 1;
+        pairID = globalPairID;
+
+        blockTypeStr = 'ACTIVE';
+        isActiveBlock = 1;
+
+        blockRows = activeRows(activeStart:activeStart+trialsPerActiveBlock-1, :);
+        activeStart = activeStart + trialsPerActiveBlock;
+
+        nTrials = size(blockRows,1);
+
+        TrialStim_param = table('Size', [nTrials length(VarNames)], ...
+            'VariableNames', VarNames, 'VariableTypes', VarType);
+
+        for n = 1:nTrials
+
+            armSpeedAbs = blockRows(n,3);
+            stimDir = blockRows(n,4);
+            armSign = blockRows(n,6);
+
+            TrialStim_param.Trial_num(n) = n;
+            TrialStim_param.PairID(n) = pairID;
+
+            TrialStim_param.StimDirection(n) = stimDir;
+            TrialStim_param.Stim_Speed(n) = tactileMotion_speed;
+            TrialStim_param.StimDuration(n) = tactileMotion_duration;
+            TrialStim_param.StimIndentation(n) = tactileMotion_stimIndent;
+            TrialStim_param.StimOnset(n) = nan;
+
+            TrialStim_param.StimDirection_arduino(n) = stimDir;
+            TrialStim_param.StimSpeed_arduino(n) = tactileMotion_speed_arduino;
+            TrialStim_param.StimDuration_arduino(n) = tactileMotion_duration_arduino;
+            TrialStim_param.StimIndentation_arduino(n) = tactileMotion_indent_arduino;
+
+            TrialStim_param.HandPosture(n) = blockRows(n,2);
+
+            TrialStim_param.Arm_Mov_duration(n) = durationArm_mov;
+            TrialStim_param.Arm_Mov_Onset(n) = nan;
+            TrialStim_param.isRep(n)=0;
+
+            ardIdx = find(armSpeedAbs == pickArmMovSpeed, 1);
+            if isempty(ardIdx)
+                error('Could not match armSpeedAbs to pickArmMovSpeed.');
+            end
+
+            if armSign == 0
+                TrialStim_param.ArmDirection(n) = "No movement";
+                TrialStim_param.Arm_Mov_Speed(n) = 0;
+
+                TrialStim_param.Arm_mov_StartPosition(n) = randi([0 1],1,1);
+                if TrialStim_param.Arm_mov_StartPosition(n) == 0
+                    TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
+                else
+                    TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
+                end
+
+                TrialStim_param.Arm_Mov_Steps_arduino(n) = 0;
+
+            elseif armSign < 0
+                TrialStim_param.Arm_Mov_Speed(n) = -abs(armSpeedAbs);
+
+                TrialStim_param.Arm_mov_StartPosition(n) = 0;
+                TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
+                TrialStim_param.Arm_Mov_Steps_arduino(n) = -1 * pickArmMovSteps_arduino(ardIdx);
+
+                TrialStim_param.ArmDirection(n) = "Left to Right";
+
+            else
+                TrialStim_param.Arm_Mov_Speed(n) = abs(armSpeedAbs);
+
+                TrialStim_param.Arm_mov_StartPosition(n) = 1;
+                TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
+                TrialStim_param.Arm_Mov_Steps_arduino(n) = pickArmMovSteps_arduino(ardIdx);
+
+                TrialStim_param.ArmDirection(n) = "Right to Left";
+            end
+
+            TrialStim_param.Arm_Mov_StepsAbs_arduino(n) = abs(TrialStim_param.Arm_Mov_Steps_arduino(n));
+            TrialStim_param.Arm_Mov_Speed_arduino(n) = pickArmMovSpeed_arduino(ardIdx);
+            TrialStim_param.Arm_Mov_Acc_arduino(n) = pickArmMovAcc_arduino(ardIdx);
+
+            TrialStim_param.InterTrialInterval(n) = ITI;
+            TrialStim_param.Response(n) = nan;
+            TrialStim_param.ReactionTime(n) = nan;
+            TrialStim_param.TrialStart_time(n) = nan;
+            TrialStim_param.IsActive(n) = isActiveBlock;
+            TrialStim_param.MeasuredSpeed_cm_s(n) = nan;
+            TrialStim_param.EncoderSamples(n) = {[]};
+            TrialStim_param.AbsExpStart(n) = nan;
+            TrialStim_param.AbsTrialStart(n) = nan;
+            TrialStim_param.OnsetSample(n) = {[]};
+        end
+
+        blockCounter = blockCounter + 1;
+        activeBlockNum = blockCounter;
+
+        fileName = fullfile(outDir, ...
+            [subjID '_' taskType ...
+            '_ElbowPosture_' num2str(currentPosture) ...
+            '_pair_' sprintf('%02d', pairID) ...
+            '_block_' sprintf('%02d', activeBlockNum) ...
+            '_' blockTypeStr '.mat']);
+
+        save(fileName, 'TrialStim_param');
+        disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
+            num2str(currentPosture) ' saved'])
+
+        % Create matching passive block
+        passiveTrial_param = TrialStim_param;
+        passiveTrial_param.IsActive(:) = 0;
+
+        % Randomly permute trial order within passive (fully random)
+        randIdx = randperm(height(passiveTrial_param));  % shuffle table rows [web:4][web:16]
+        passiveTrial_param = passiveTrial_param(randIdx, :);
+
+        % Reset trial numbers to match new order
+        passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
+
+        blockCounter = blockCounter + 1;
+        passiveBlockNum = blockCounter;
+
+        passiveFileName = fullfile(outDir, ...
+            [subjID '_' taskType ...
+            '_ElbowPosture_' num2str(currentPosture) ...
+            '_pair_' sprintf('%02d', pairID) ...
+            '_block_' sprintf('%02d', passiveBlockNum) ...
+            '_PASSIVE.mat']);
+
+        TrialStim_param = passiveTrial_param;
+        save(passiveFileName, 'TrialStim_param');
+
+        disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
+
+    end
+end
+
+end

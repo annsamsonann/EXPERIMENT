@@ -37,20 +37,22 @@ outDir = fullfile(parDir, subjID);
 if ~isfolder(outDir)
     mkdir(outDir);
 end
-
+%Arm_Mov_Onset_Trial -onset of arm motion relative to start of the trial
+%Measured_Arm_Mov_Duration_s
+%Measured_Arm_Mov_Dist_cm
 VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'Arm_Mov_duration', 'Arm_Mov_Onset', ...
     'StimDirection', 'Stim_Speed', 'StimDuration', 'StimIndentation', 'StimOnset', 'HandPosture', ...
     'Arm_mov_StartPosition', 'Arm_mov_StartPosition_arduino', 'Arm_Mov_Speed_arduino', ...
     'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
     'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', ...
     'StimIndentation_arduino', 'InterTrialInterval', 'Response', 'ReactionTime', ...
-    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample'};
+    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample','isRep','Arm_Mov_Onset_Trial','Measured_Arm_Mov_Duration_s','Measured_Arm_Mov_Dist_cm'};
 
 VarType = {'double', 'double', 'string', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'cell', 'double', 'double', 'cell'};
+    'double', 'double', 'double', 'double', 'cell', 'double', 'double', 'cell','double','double','double','double'};
 
 % =========================
 % 1) Build master trial matrix
@@ -136,22 +138,22 @@ for post = 1:length(armPosture)
 
             TrialStim_param.Trial_num(n) = n;
             TrialStim_param.PairID(n) = pairID;
-
             TrialStim_param.StimDirection(n) = stimDir;
             TrialStim_param.Stim_Speed(n) = tactileMotion_speed;
             TrialStim_param.StimDuration(n) = tactileMotion_duration;
             TrialStim_param.StimIndentation(n) = tactileMotion_stimIndent;
             TrialStim_param.StimOnset(n) = nan;
-
             TrialStim_param.StimDirection_arduino(n) = stimDir;
             TrialStim_param.StimSpeed_arduino(n) = tactileMotion_speed_arduino;
             TrialStim_param.StimDuration_arduino(n) = tactileMotion_duration_arduino;
             TrialStim_param.StimIndentation_arduino(n) = tactileMotion_indent_arduino;
-
             TrialStim_param.HandPosture(n) = blockRows(n,2);
-
             TrialStim_param.Arm_Mov_duration(n) = durationArm_mov;
             TrialStim_param.Arm_Mov_Onset(n) = nan;
+            TrialStim_param.isRep(n)=0;
+            TrialStim_param.Arm_Mov_Onset_Trial(n)= nan;
+            TrialStim_param.Measured_Arm_Mov_Duration_s(n) = nan;
+            TrialStim_param.Measured_Arm_Mov_Dist_cm(n) = nan;
 
             ardIdx = find(armSpeedAbs == pickArmMovSpeed, 1);
             if isempty(ardIdx)
