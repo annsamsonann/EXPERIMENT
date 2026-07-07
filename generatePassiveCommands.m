@@ -1,3 +1,4 @@
+%% OLD !!!
 %return UNSIGNED 
 function S = generatePassiveCommands(activeBehavior)
     fast_target_speed_steps = ExpConfig.fast_target_speed_steps;
