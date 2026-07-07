@@ -1,0 +1,46 @@
+function [TrialStim_param] = generatePairedPassive(activeBehavior)
+    cm_per_step = ExpConfig.cm_per_step;
+    t = TrialStim_param.Measured_Arm_Mov_Duration_s;
+    TrialStim_param = activeBehavior;
+    
+    % I need to take all active trials with mesured speeds etc
+    % 1) remove all behavior / recorded stuff (make it have the same format as
+    % generate trials initially (trialStimParam)
+
+    % 1. Default everything to the positive duration value
+
+    TrialStim_param.Arm_Mov_Speed (TrialStim_param.Arm_Mov_Speed ~= 0) = TrialStim_param.Measured_Arm_Mov_Duration_s;
+    isNegative = TrialStim_param.Arm_Mov_Steps_arduino < 0;
+    TrialStim_param.Arm_Mov_Speed(isNegative) = TrialStim_param.Measured_Arm_Mov_Duration_s(isNegative) * -1;
+    
+    TrialStim_param.IsActive  = 0;
+    TrialStim_param.Arm_Mov_Onset  = nan;
+    TrialStim_param.Arm_Mov_Onset_Trial = nan;
+    TrialStim_param.StimOnset  = nan;
+    TrialStim_param.InterTrialInterval  = nan;
+    TrialStim_param.Response  = nan;
+    TrialStim_param.ReactionTime  = nan;
+    TrialStim_param.TrialStart_time  = nan;
+    TrialStim_param.AbsExpStart  = nan;
+    TrialStim_param.AbsTrialStart  = nan;
+    TrialStim_param.EncoderSamples  = {[]};
+    TrialStim_param.OnsetSample  = {[]};
+    TrialStim_param.Measured_Arm_Mov_Duration_s  = nan;
+    TrialStim_param.Measured_Arm_Mov_Dist_cm  = nan;
+    TrialStim_param.MeasuredSpeed_cm_s  = nan;
+    % 2) overwrite arduino commands based on the arm measured speed and
+    % duration of arm motion
+
+        TrialStim_param.Arm_Mov_Speed_arduino = round(TrialStim_param.Arm_Mov_Speed / cm_per_step);
+        TrialStim_param.Arm_Mov_Acc_arduino
+        TrialStim_param.Arm_Mov_Steps_arduino
+        Arm_Mov_StepsAbs_arduino
+    
+    
+    
+    
+    % 3) Overwrite start possitions
+    % 4) Randomize the order
+    % 5) Return to be saved
+
+end

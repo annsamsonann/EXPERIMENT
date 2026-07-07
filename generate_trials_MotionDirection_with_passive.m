@@ -39,7 +39,7 @@ VarNames = { ...
     'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', 'StimIndentation_arduino', 'IsActive', ...
     'Arm_Mov_Onset', 'StimOnset', 'Arm_Mov_Onset_Trial', 'InterTrialInterval', 'Response', ...
     'ReactionTime', 'TrialStart_time', 'MeasuredSpeed_cm_s', 'Measured_Arm_Mov_Duration_s', 'Measured_Arm_Mov_Dist_cm', ...
-    'EncoderSamples', 'OnsetSample', 'AbsExpStart', 'AbsTrialStart', 'isRep' ...
+    'EncoderSamples', 'OnsetSample', 'AbsExpStart', 'AbsTrialStart', 'isRep', 'Cued_Speed' ...
 };
 
 VarType = { ...
@@ -49,7 +49,7 @@ VarType = { ...
     'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', ...
     'double', 'double', 'double', 'double', 'double', ...
-    'cell',   'cell',   'double', 'double', 'double' ...
+    'cell',   'cell',   'double', 'double', 'double', 'double' ...
 };
 % =========================
 % 1) Build master trial matrix
@@ -143,7 +143,7 @@ for post = 1:length(armPosture)
             TrialStim_param.StimDuration_arduino(n) = tactileMotion_duration_arduino;
             TrialStim_param.StimIndentation_arduino(n) = tactileMotion_indent_arduino;
             TrialStim_param.HandPosture(n) = blockRows(n,2);
-            TrialStim_param.Arm_Mov_duration(n) = durationArm_mov;
+           % TrialStim_param.Arm_Mov_duration(n) = durationArm_mov;
            
 
             ardIdx = find(armSpeedAbs == pickArmMovSpeed, 1);
@@ -174,6 +174,16 @@ for post = 1:length(armPosture)
                 TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * ExpConfig.LinStage_range_steps; % max(pickArmMovSteps_arduino);
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = pickArmMovSteps_arduino(ardIdx);
                 TrialStim_param.ArmDirection(n) = "Right to Left";
+            end
+
+            if armSpeedAbs == 0
+                TrialStim_param.Cued_Speed(n) = 0;
+            elseif armSpeedAbs == 3
+                TrialStim_param.Cued_Speed(n) = 1;
+            elseif armSpeedAbs == 8
+                TrialStim_param.Cued_Speed(n) = 2;
+            else
+                TrialStim_param.Cued_Speed(n) = nan;
             end
 
             TrialStim_param.Arm_Mov_StepsAbs_arduino(n) = abs(TrialStim_param.Arm_Mov_Steps_arduino(n));

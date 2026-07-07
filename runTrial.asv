@@ -177,9 +177,6 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         if ~isActive 
             cmd = sprintf("M %d\n", stepsArduino);
             writeline(app.LinearStage_motor, cmd);
-            armMoveDurSec = abs(stepsArduino / speedArduino);
-            armMovStopTime = startArmMov + armMoveDurSec;
-                
         end 
 
         while true
@@ -200,12 +197,10 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     trialRow.StimDuration_arduino), "string");
                 startStim = GetSecs;
                 stimEndTime = startStim + stimDurSec;
-                if isActive
-                    endTime = stimEndTime;
-                elseif ~isActive
-                    endTime = armMovStopTime;
-                end
-                   
+
+                armMoveDurSec = abs(stepsArduino / speedArduino);
+                armMovStopTime = startArmMov + armMoveDurSec;
+                
                 stimStarted = true;
             end
 
@@ -219,7 +214,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     stopCollectingSamples = true; 
                  
                 end
-                if GetSecs >= endTime % Either the stimulus end time or the arm movement duration end time 
+                if GetSecs >= stimEndTime % dhpuld be mov duration instead of end time 
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     break

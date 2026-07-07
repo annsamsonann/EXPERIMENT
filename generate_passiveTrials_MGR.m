@@ -19,7 +19,7 @@ motionTrialsIdx = find(passiveBlocks.Arm_Mov_Speed ~= 0);
 NoMotionTrialsIdx = find(passiveBlocks.Arm_Mov_Speed == 0);
 
 negativeVelocity = ones(size(passiveBlocks,1),1);
-negativeVelocity(find(contains(passiveBlocks.ArmDirection, "Left to Right") == 1)) = -1;
+negativeVelocity(find(contains(passiveBlocks.ArmDirection, "Right to Left") == 1)) = -1;
 negativeVelocity = negativeVelocity(motionTrialsIdx);
 
 t = passiveBlocks.Measured_Arm_Mov_Duration_s(motionTrialsIdx);

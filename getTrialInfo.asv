@@ -2,18 +2,18 @@ function [moveDir, speedStr, no_motion_flag] = getTrialInfo(app, speed)
 no_motion_flag = false;
 if speed < 0
     moveDir = 'right';
-elseif speed > 0
+elseif stepsArduino > 0
     moveDir = 'left';
 else
     moveDir = 'none';
     no_motion_flag = true;
 end
 
-if abs(speed) >= 6
+if abs(speedArduino) >= 6
     speedStr = 'fast';
-elseif abs(speed) < 6  && abs(speed) > 0
+elseif abs(speedArduino) < 6 && abs(speedArduino) > 1
     speedStr = 'slow';
-elseif abs(speed) == 0
+elseif abs(speedArduino) == 0
     speedStr = 'no';
 end
 end

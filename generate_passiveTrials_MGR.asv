@@ -1,9 +1,12 @@
-function [passiveBlocks]=  generatePairedPassive(experimentTrial_Matrix)
-
+function [passiveBlocks]=  generatePairedPassive(activeBehavior)
+clear all; close all; clc
+parDir = 'C:\Users\ramirezlab\Desktop\motion_experiment_clean\DEBUG_TRIALS\Tesst1210\Tesst1210_data\';
+fileName = 'Tesst1210_Motion_Direction_ElbowPosture_90_pair_01_block_01_ACTIVE_behavior.mat';
 cm_per_step = ExpConfig.cm_per_step;
 
-idx = [];
-passiveBlocks = [];
+load([parDir fileName]);
+
+idx = []; passiveBlocks = [];
 idx = randperm(size(experimentTrial_Matrix,1));
 passiveBlocks = experimentTrial_Matrix(idx,:);
 a = 1:size(passiveBlocks,1);
@@ -19,7 +22,7 @@ motionTrialsIdx = find(passiveBlocks.Arm_Mov_Speed ~= 0);
 NoMotionTrialsIdx = find(passiveBlocks.Arm_Mov_Speed == 0);
 
 negativeVelocity = ones(size(passiveBlocks,1),1);
-negativeVelocity(find(contains(passiveBlocks.ArmDirection, "Left to Right") == 1)) = -1;
+negativeVelocity(find(contains(passiveBlocks.ArmDirection, "Right to Left") == 1)) = -1;
 negativeVelocity = negativeVelocity(motionTrialsIdx);
 
 t = passiveBlocks.Measured_Arm_Mov_Duration_s(motionTrialsIdx);
@@ -47,6 +50,5 @@ passiveBlocks.OnsetSample = cell(size(passiveBlocks,1), 1);
 
 passiveBlocks.AbsExpStart = nan(size(passiveBlocks,1),1);
 passiveBlocks.AbsTrialStart = nan(size(passiveBlocks,1),1);
-end
  
 
