@@ -50,8 +50,6 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
 
             if isActive
                 newSamples = readAvailableEncoderSamples(app);
-               
-
                 if ~isempty(newSamples)
                     if ~seenZeroAfterReset
                         zidx = find(abs(newSamples(:,3)) <= zeroTol, 1, 'first');
@@ -75,22 +73,6 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                         end
                     end
                 end
-        % while ~armMovStarted 
-        %     showBall = true; 
-        %     drawInstructionCue(app, windowPtr, isActive, speedCmSec, speedStr, moveDir, showBall, timeCueStart);
-        %     if isActive
-        %         newSamples = readAvailableEncoderSamples(app);
-        %         if  ~isempty(newSamples) && isnan(startArmMov)
-        %             idx = find(abs(newSamples(:,3)) >= threshold_cm, 1, 'first');
-        %             if ~isempty(idx) %when a sample over the threshold was found 
-        %                 encoderSamples = newSamples(idx:end,:);  
-        %                 onsetSample = newSamples;
-        %                 startArmMov = GetSecs;
-        %                 armMovStarted = true; 
-        %                 break
-        %             end
-        % 
-        %         end
             else % Passive
                 if ~motorCmdSent
                     writeline(app.LinearStage_motor, sprintf("S %d\n", speedArduino)); % if wrong speed - add pause between 
@@ -112,14 +94,14 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
     
     end 
     trialRow.Arm_Mov_Onset = startArmMov - expTime_start; %time relative to experiment start
+    trialRow.Arm_Mov_Onset_Trial = startArmMov- startTrial; % time relative to the start of trial 
     %% 
 
-    if no_motion_flag % same active and passive,  no motion cue is still on until response or timeout 
+    if no_motion_flag % same for active and passive,  no motion cue is still on until response or timeout 
         WaitSecs(stimLagSec); %0.25 sec to match motion trials 
         indentLoc = app.curIndent;
         write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
         indentMovedDown = true;
-
         write(app.rotation_and_spin_motor, sprintf("%d %d %d\n", 3, ...
             flipSpeed * trialRow.StimSpeed_arduino, ...
             trialRow.StimDuration_arduino), "string");
@@ -202,6 +184,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     stopCollectingSamples = true; 
+                 
                 end
                 if GetSecs >= stimEndTime
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
@@ -232,10 +215,11 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         trialRow.StimOnset = nan;
     else
         trialRow.StimOnset = startStim - expTime_start;
-    end
-        
-    avgVelocity = computeAverageEncoderVelocity(app, encoderSamples);
+    end 
+    [avgVelocity,elapsedTime_s,totalDist_cm] = computeAverageEncoderVelocity(app, encoderSamples);
     trialRow.MeasuredSpeed_cm_s = avgVelocity;
+    trialRow.Measured_Arm_Mov_Duration_s  = elapsedTime_s;
+    trialRow.Measured_Arm_Mov_Dist_cm = totalDist_cm; 
     trialRow.EncoderSamples = {encoderSamples};
     trialRow.Response = buttonPushed;
     trialRow.ReactionTime = respTime;
