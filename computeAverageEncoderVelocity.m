@@ -1,7 +1,9 @@
 
 function [avgVel_cm_s,elapsedTime_s,totalDist_cm]  = computeAverageEncoderVelocity(app, encoderSamples)
-if size(encoderSamples, 1) < 2
-    avgVel_cm_s = NaN;
+if isempty(encoderSamples) || size(encoderSamples, 1) < 2
+    avgVel_cm_s   = NaN;
+    elapsedTime_s = NaN;   % Or NaN, depending on your preference
+    totalDist_cm  = NaN;   % Or NaN
     return
 end
 

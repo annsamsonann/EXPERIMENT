@@ -157,7 +157,7 @@ for post = 1:length(armPosture)
                 if TrialStim_param.Arm_mov_StartPosition(n) == 0
                     TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
                 else
-                    TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
+                    TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * ExpConfig.LinStage_range_steps;% max(pickArmMovSteps_arduino);
                 end
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = 0;
 
@@ -171,7 +171,7 @@ for post = 1:length(armPosture)
             else
                 TrialStim_param.Arm_Mov_Speed(n) = abs(armSpeedAbs);
                 TrialStim_param.Arm_mov_StartPosition(n) = 1;
-                TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
+                TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * ExpConfig.LinStage_range_steps; % max(pickArmMovSteps_arduino);
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = pickArmMovSteps_arduino(ardIdx);
                 TrialStim_param.ArmDirection(n) = "Right to Left";
             end
