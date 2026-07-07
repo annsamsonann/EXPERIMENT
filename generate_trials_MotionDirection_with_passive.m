@@ -24,22 +24,16 @@ tactileMotion_duration_arduino = tactileMotion_duration * 1000;
 
 ITI = ExpConfig.ITI;
 
-blocks_per_posture = 12; % 8 active + 8 passive
-trials_per_block_per_type = 6; % 16 directions * 3 speeds = 48 trials per type, so 48/8 = 6
-n_active_blocks = blocks_per_posture / 2;
-% n_passive_blocks = blocks_per_posture / 2;
+%%%%%
+n_active_blocks = 12; % per Posture 
+% totl blocks = 36
 
-if mod(blocks_per_posture, 2) ~= 0
-    error('blocks_per_posture must be even.');
-end
 
 outDir = fullfile(parDir, subjID);
 if ~isfolder(outDir)
     mkdir(outDir);
 end
-%Arm_Mov_Onset_Trial -onset of arm motion relative to start of the trial
-%Measured_Arm_Mov_Duration_s
-%Measured_Arm_Mov_Dist_cm
+
 VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'Arm_Mov_duration', 'Arm_Mov_Onset', ...
     'StimDirection', 'Stim_Speed', 'StimDuration', 'StimIndentation', 'StimOnset', 'HandPosture', ...
     'Arm_mov_StartPosition', 'Arm_mov_StartPosition_arduino', 'Arm_Mov_Speed_arduino', ...
@@ -99,7 +93,6 @@ master(activeMovIdx(length(activeMovIdx)/2+1:end), 6) = 1;
 % 3) Export by posture and block
 % =========================
 globalPairID = 0;
-
 for post = 1:length(armPosture)
     currentPosture = armPosture(post);
 
@@ -220,33 +213,7 @@ for post = 1:length(armPosture)
 
         save(fileName, 'TrialStim_param');
         disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
-            num2str(currentPosture) ' saved'])
-        % 
-        % % Create matching passive block
-        % passiveTrial_param = TrialStim_param;
-        % passiveTrial_param.IsActive(:) = 0;
-        % 
-        % % Randomly permute trial order within passive (fully random)
-        % randIdx = randperm(height(passiveTrial_param));  % shuffle table rows [web:4][web:16]
-        % passiveTrial_param = passiveTrial_param(randIdx, :);
-        % 
-        % % Reset trial numbers to match new order
-        % passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
-        % 
-        % blockCounter = blockCounter + 1;
-        % passiveBlockNum = blockCounter;
-        % 
-        % passiveFileName = fullfile(outDir, ...
-        %     [subjID '_' taskType ...
-        %     '_ElbowPosture_' num2str(currentPosture) ...
-        %     '_pair_' sprintf('%02d', pairID) ...
-        %     '_block_' sprintf('%02d', passiveBlockNum) ...
-        %     '_PASSIVE.mat']);
-        % 
-        % TrialStim_param = passiveTrial_param;
-        % save(passiveFileName, 'TrialStim_param');
-        % 
-        % disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
+            num2str(currentPosture) ' saved']);
 
     end
 end
