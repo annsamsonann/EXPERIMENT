@@ -22,12 +22,9 @@ tactileMotion_speed_arduino = 600;
 tactileMotion_indent_arduino = 1200;
 tactileMotion_duration_arduino = tactileMotion_duration * 1000;
 
-ITI = ExpConfig.ITI;
-
 %%%%%
 n_active_blocks = 12; % per Posture 
 % totl blocks = 36
-
 
 outDir = fullfile(parDir, subjID);
 if ~isfolder(outDir)
@@ -35,24 +32,25 @@ if ~isfolder(outDir)
 end
 %Arm_Mov_Speed is the INSTRUCTION for active trials, not actual measured
 %speed
+VarNames = { ...
+    'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'HandPosture', ...
+    'StimDirection', 'Stim_Speed', 'StimDuration', 'StimIndentation', 'Arm_mov_StartPosition', ...
+    'Arm_mov_StartPosition_arduino', 'Arm_Mov_Speed_arduino', 'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
+    'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', 'StimIndentation_arduino', 'IsActive', ...
+    'Arm_Mov_Onset', 'StimOnset', 'Arm_Mov_Onset_Trial', 'InterTrialInterval', 'Response', ...
+    'ReactionTime', 'TrialStart_time', 'MeasuredSpeed_cm_s', 'Measured_Arm_Mov_Duration_s', 'Measured_Arm_Mov_Dist_cm', ...
+    'EncoderSamples', 'OnsetSample', 'AbsExpStart', 'AbsTrialStart', 'isRep' ...
+};
 
-VarNames = {'Trial_num', 'PairID', 'ArmDirection', 'Arm_Mov_Speed', 'HandPosture', 
-    
-
-'Arm_Mov_Onset', ...
-    'StimDirection', 'Stim_Speed', 'StimDuration', 'StimIndentation', 'StimOnset',  ...
-    'Arm_mov_StartPosition', 'Arm_mov_StartPosition_arduino', 'Arm_Mov_Speed_arduino', ...
-    'Arm_Mov_Acc_arduino', 'Arm_Mov_Steps_arduino', 'Arm_Mov_StepsAbs_arduino', ...
-    'StimDirection_arduino', 'StimSpeed_arduino', 'StimDuration_arduino', ...
-    'StimIndentation_arduino', 'InterTrialInterval', 'Response', 'ReactionTime', ...
-    'TrialStart_time', 'IsActive', 'MeasuredSpeed_cm_s', 'EncoderSamples','AbsExpStart', 'AbsTrialStart', 'OnsetSample','isRep','Arm_Mov_Onset_Trial','Measured_Arm_Mov_Duration_s','Measured_Arm_Mov_Dist_cm'};
-
-VarType = {'double', 'double', 'string', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'double', 'double', ...
-    'double', 'double', 'double', 'double', 'cell', 'double', 'double', 'cell','double','double','double','double'};
-
+VarType = { ...
+    'double', 'double', 'string', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', ...
+    'double', 'double', 'double', 'double', 'double', ...
+    'cell',   'cell',   'double', 'double', 'double' ...
+};
 % =========================
 % 1) Build master trial matrix
 % =========================
@@ -140,53 +138,41 @@ for post = 1:length(armPosture)
             TrialStim_param.Stim_Speed(n) = tactileMotion_speed;
             TrialStim_param.StimDuration(n) = tactileMotion_duration;
             TrialStim_param.StimIndentation(n) = tactileMotion_stimIndent;
-            TrialStim_param.StimOnset(n) = nan;
             TrialStim_param.StimDirection_arduino(n) = stimDir;
             TrialStim_param.StimSpeed_arduino(n) = tactileMotion_speed_arduino;
             TrialStim_param.StimDuration_arduino(n) = tactileMotion_duration_arduino;
             TrialStim_param.StimIndentation_arduino(n) = tactileMotion_indent_arduino;
             TrialStim_param.HandPosture(n) = blockRows(n,2);
             TrialStim_param.Arm_Mov_duration(n) = durationArm_mov;
-            TrialStim_param.Arm_Mov_Onset(n) = nan;
-            TrialStim_param.isRep(n)=0;
-            TrialStim_param.Arm_Mov_Onset_Trial(n)= nan;
-            TrialStim_param.Measured_Arm_Mov_Duration_s(n) = nan;
-            TrialStim_param.Measured_Arm_Mov_Dist_cm(n) = nan;
+           
 
             ardIdx = find(armSpeedAbs == pickArmMovSpeed, 1);
             if isempty(ardIdx)
                 error('Could not match armSpeedAbs to pickArmMovSpeed.');
             end
-
             if armSign == 0
                 TrialStim_param.ArmDirection(n) = "No movement";
                 TrialStim_param.Arm_Mov_Speed(n) = 0;
-
                 TrialStim_param.Arm_mov_StartPosition(n) = randi([0 1],1,1);
                 if TrialStim_param.Arm_mov_StartPosition(n) == 0
                     TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
                 else
                     TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
                 end
-
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = 0;
 
             elseif armSign < 0
                 TrialStim_param.Arm_Mov_Speed(n) = -abs(armSpeedAbs);
-
                 TrialStim_param.Arm_mov_StartPosition(n) = 0;
                 TrialStim_param.Arm_mov_StartPosition_arduino(n) = 0;
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = -1 * pickArmMovSteps_arduino(ardIdx);
-
                 TrialStim_param.ArmDirection(n) = "Left to Right";
 
             else
                 TrialStim_param.Arm_Mov_Speed(n) = abs(armSpeedAbs);
-
                 TrialStim_param.Arm_mov_StartPosition(n) = 1;
                 TrialStim_param.Arm_mov_StartPosition_arduino(n) = -1 * max(pickArmMovSteps_arduino);
                 TrialStim_param.Arm_Mov_Steps_arduino(n) = pickArmMovSteps_arduino(ardIdx);
-
                 TrialStim_param.ArmDirection(n) = "Right to Left";
             end
 
@@ -194,21 +180,28 @@ for post = 1:length(armPosture)
             TrialStim_param.Arm_Mov_Speed_arduino(n) = pickArmMovSpeed_arduino(ardIdx);
             TrialStim_param.Arm_Mov_Acc_arduino(n) = pickArmMovAcc_arduino(ardIdx);
 
-            TrialStim_param.InterTrialInterval(n) = ITI;
+
+            TrialStim_param.IsActive(n) = isActiveBlock;
+            TrialStim_param.isRep(n)=0;
+            TrialStim_param.Arm_Mov_Onset(n) = nan;
+            TrialStim_param.Arm_Mov_Onset_Trial(n)= nan;
+            TrialStim_param.StimOnset(n) = nan;
+            TrialStim_param.InterTrialInterval(n) = nan;
             TrialStim_param.Response(n) = nan;
             TrialStim_param.ReactionTime(n) = nan;
             TrialStim_param.TrialStart_time(n) = nan;
-            TrialStim_param.IsActive(n) = isActiveBlock;
-            TrialStim_param.MeasuredSpeed_cm_s(n) = nan;
-            TrialStim_param.EncoderSamples(n) = {[]};
             TrialStim_param.AbsExpStart(n) = nan;
             TrialStim_param.AbsTrialStart(n) = nan;
+            TrialStim_param.EncoderSamples(n) = {[]};
             TrialStim_param.OnsetSample(n) = {[]};
+
+            TrialStim_param.Measured_Arm_Mov_Duration_s(n) = nan;
+            TrialStim_param.Measured_Arm_Mov_Dist_cm(n) = nan;
+            TrialStim_param.MeasuredSpeed_cm_s(n) = nan;
         end
 
         blockCounter = blockCounter + 1;
         activeBlockNum  = 2*bb - 1; 
-
         fileName = fullfile(outDir, ...
             [subjID '_' taskType ...
             '_ElbowPosture_' num2str(currentPosture) ...
