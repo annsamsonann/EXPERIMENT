@@ -209,7 +209,7 @@ for post = 1:length(armPosture)
         end
 
         blockCounter = blockCounter + 1;
-        activeBlockNum = blockCounter;
+        activeBlockNum  = 2*bb - 1; 
 
         fileName = fullfile(outDir, ...
             [subjID '_' taskType ...
@@ -221,32 +221,32 @@ for post = 1:length(armPosture)
         save(fileName, 'TrialStim_param');
         disp(['Pair #' num2str(pairID) ' (' blockTypeStr ') of elbow posture ' ...
             num2str(currentPosture) ' saved'])
-
-        % Create matching passive block
-        passiveTrial_param = TrialStim_param;
-        passiveTrial_param.IsActive(:) = 0;
-
-        % Randomly permute trial order within passive (fully random)
-        randIdx = randperm(height(passiveTrial_param));  % shuffle table rows [web:4][web:16]
-        passiveTrial_param = passiveTrial_param(randIdx, :);
-
-        % Reset trial numbers to match new order
-        passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
-
-        blockCounter = blockCounter + 1;
-        passiveBlockNum = blockCounter;
-
-        passiveFileName = fullfile(outDir, ...
-            [subjID '_' taskType ...
-            '_ElbowPosture_' num2str(currentPosture) ...
-            '_pair_' sprintf('%02d', pairID) ...
-            '_block_' sprintf('%02d', passiveBlockNum) ...
-            '_PASSIVE.mat']);
-
-        TrialStim_param = passiveTrial_param;
-        save(passiveFileName, 'TrialStim_param');
-
-        disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
+        % 
+        % % Create matching passive block
+        % passiveTrial_param = TrialStim_param;
+        % passiveTrial_param.IsActive(:) = 0;
+        % 
+        % % Randomly permute trial order within passive (fully random)
+        % randIdx = randperm(height(passiveTrial_param));  % shuffle table rows [web:4][web:16]
+        % passiveTrial_param = passiveTrial_param(randIdx, :);
+        % 
+        % % Reset trial numbers to match new order
+        % passiveTrial_param.Trial_num = (1:height(passiveTrial_param))';
+        % 
+        % blockCounter = blockCounter + 1;
+        % passiveBlockNum = blockCounter;
+        % 
+        % passiveFileName = fullfile(outDir, ...
+        %     [subjID '_' taskType ...
+        %     '_ElbowPosture_' num2str(currentPosture) ...
+        %     '_pair_' sprintf('%02d', pairID) ...
+        %     '_block_' sprintf('%02d', passiveBlockNum) ...
+        %     '_PASSIVE.mat']);
+        % 
+        % TrialStim_param = passiveTrial_param;
+        % save(passiveFileName, 'TrialStim_param');
+        % 
+        % disp(['Pair #' num2str(pairID) ' (PASSIVE) of elbow posture ' num2str(currentPosture) ' saved'])
 
     end
 end
