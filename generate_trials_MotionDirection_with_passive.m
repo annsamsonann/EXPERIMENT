@@ -3,7 +3,8 @@ function generate_trials_MotionDirection_with_passive(parDir, subjID, taskType)
 fast_speed = ExpConfig.fast_target;
 slow_speed = ExpConfig.slow_target;
 pickArmMovSpeed = [0 slow_speed fast_speed]; % cm/s: no motion, slow, fast
-pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];
+%pickStimDirection_trial = [0 45 75 85 90 95 105 135 180 225 255 265 270 275 285 315];
+pickStimDirection_trial = [0:22.5:337.5]';
 armPosture = [90 53 15];
 isActiveLevels = [1];
 nRepPerCondition = 10;
@@ -59,14 +60,22 @@ for ia = 1:length(isActiveLevels) % create only active first
     for ip = 1:length(armPosture)
         for is = 1:length(pickArmMovSpeed)
             for id = 1:length(pickStimDirection_trial)
+
+                % newDirections = pickStimDirection_trial + (90 - armPosture(ip));
+                % newDirections(find(newDirections >= 360)) = newDirections(find(newDirections >= 360)) - 360;
+
                 for ir = 1:nRepPerCondition
-                    master = [master; ...
-                        isActiveLevels(ia), ...   % col 1: IsActive
-                        armPosture(ip), ...       % col 2: HandPosture
-                        pickArmMovSpeed(is), ...  % col 3: ArmSpeedAbs
-                        pickStimDirection_trial(id), ... % col 4: StimDirection
-                        ir, ...                   % col 5: Rep
-                        0];                       % col 6: ArmMovSign (to assign later)
+                    % master = [master, ...
+                    %     isActiveLevels(ia), ...   % col 1: IsActive
+                    %     armPosture(ip), ...       % col 2: HandPosture
+                    %     pickArmMovSpeed(is), ...  % col 3: ArmSpeedAbs
+                    %     pickStimDirection_trial(id), ... % col 4: StimDirection
+                    %     % newDirections(id), ...
+                    %     ir, ...                   % col 5: Rep
+                    %     0];                       % col 6: ArmMovSign (to assign later)
+
+                    master = cat(1,master, [isActiveLevels(ia), armPosture(ip), pickArmMovSpeed(is), ...
+                        pickStimDirection_trial(id), ir, 0]);
                 end
             end
         end

@@ -364,10 +364,10 @@ function drawInstructionCue(app, windowPtr, isActive, speedStr, moveDir, showBal
     % Build rect centered on (ballX, ballY)
     baseRect = [0 0 ballDiamPix ballDiamPix];
     ballRect = CenterRectOnPointd(baseRect, ballX, ballY);
-
-    % Optional debug print to MATLAB command window
-    fprintf('dir=%s | elapsed=%.3f | dxPix=%.2f | pathLeft=%.2f | pathRight=%.2f | ballX=%.2f\n', ...
-        char(dirStr), elapsed, dxPix, pathLeft, pathRight, ballX);
+    % 
+    % % Optional debug print to MATLAB command window
+    % fprintf('dir=%s | elapsed=%.3f | dxPix=%.2f | pathLeft=%.2f | pathRight=%.2f | ballX=%.2f\n', ...
+    %     char(dirStr), elapsed, dxPix, pathLeft, pathRight, ballX);
 
     % Draw ball
     if showBall
