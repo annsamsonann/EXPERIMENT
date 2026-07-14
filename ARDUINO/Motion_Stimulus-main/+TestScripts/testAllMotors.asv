@@ -1,0 +1,61 @@
+%% Test Linear Actuator
+clc;clear; 
+serialLA = serialport('COM16', 9600);
+configureTerminator(serialLA, "CR/LF");
+set(serialLA, 'Timeout',15); 
+
+
+%% Original Way of Moving Linear Actuator
+clc
+commandLabel = 1;
+goalPos = 900; 
+serialCommand = sprintf("%d\n", [commandLabel goalPos]);
+write(serialLA, serialCommand, "string"); 
+disp('Sent')
+
+%% Speed Control of Moving Linear Actuator
+commandLabel = 2;
+currentPos = 1000; 
+goalPos = 1000 + 2.5*46; 
+duration = 1000; 
+serialCommand = sprintf("%d\n", [commandLabel currentPos goalPos duration]);
+write(serialLA, serialCommand, "string"); 
+
+
+%% Test Stepper Motor / Herkulex
+clc;clear;
+serialSM = serialport('COM17', 115200);
+configureTerminator(serialSM, "CR/LF");
+set(serialSM, 'Timeout',15); 
+
+%% Test Herkulex with Duration 
+commandLabel = 2;
+setSpeed = 500; 
+duration = 1500; 
+
+serialCommand = sprintf("%d\n", [commandLabel setSpeed duration]);
+write(serialSM, serialCommand, "string"); 
+
+%% Test Herkulex withOUT Duration 
+commandLabel = 3;
+setSpeed = 0; 
+
+serialCommand = sprintf("%d\n", [commandLabel setSpeed]);
+write(serialSM, serialCommand, "string"); 
+
+%% Test Stepper Motor 
+fullRevSteps = 6400; 
+commandLabel = 6;
+mtrNum = 1; 
+angleAmount = 90; 
+
+if angleAmount < 0
+    angleDirection = 1; % CW
+else
+    angleDirection = 0; %% CCW
+end
+
+numSteps = round(fullRevSteps / (360 / abs(angleAmount))); 
+
+serialCommand = sprintf("%d\n", [commandLabel mtrNum angleDirection numSteps]);
+write(serialSM, serialCommand, "string"); 
