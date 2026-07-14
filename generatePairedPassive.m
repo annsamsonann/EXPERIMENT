@@ -1,4 +1,4 @@
-function [passiveBlocks]=  generatePairedPassive(experimentTrial_Matrix)
+function [passiveBlocks]=  generatePairedPassive(experimentTrial_Matrix) %Has a simple acceleration profile, can lead to abrupt stops and be jerky
 
 cm_per_step = ExpConfig.cm_per_step;
 
