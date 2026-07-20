@@ -63,7 +63,6 @@ passiveBlocks.Response = nan(size(passiveBlocks,1),1);
 passiveBlocks.ReactionTime = nan(size(passiveBlocks,1),1);
 passiveBlocks.TrialStart_time = nan(size(passiveBlocks,1),1);
 passiveBlocks.MeasuredSpeed_cm_s = nan(size(passiveBlocks,1),1);
-passiveBlocks.Measured_Arm_Mov_Duration_s = nan(size(passiveBlocks,1),1);
 passiveBlocks.Measured_Arm_Mov_Dist_cm = nan(size(passiveBlocks,1),1);
 passiveBlocks.EncoderSamples = cell(size(passiveBlocks,1), 1);
 passiveBlocks.OnsetSample = cell(size(passiveBlocks,1), 1);

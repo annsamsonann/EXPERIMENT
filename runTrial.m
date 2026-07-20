@@ -161,6 +161,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
             end
         end
         if indentMovedDown %move stim up after rotation is done 
+            moveUpTime = GetSecs - startStim;
             indentLoc = app.indentZero;
             write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
         end 
@@ -218,9 +219,9 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     stopCollectingSamples = true; 
-                 
+
                 end
-                if  GetSecs >= endTime % OR when arm motion is done? 
+                if  GetSecs >= stimEndTime || GetSecs >= endTime % break and move up if time is more than 1.5 sec from stim start, or time is more than motion duration (for cases when motion duration is < 1.75 sec) 
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     break
@@ -234,9 +235,11 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         end 
 
         if indentMovedDown %move stim up after rotation is done 
+            
             indentLoc = app.indentZero;
             write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
             moveUpTime = GetSecs - startStim;
+           
         end 
 
         if stimStarted && isempty(buttonPushed) % if did not respond before the end of stim rotation
@@ -247,7 +250,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         trialRow.StimOnset = nan;
     else
         trialRow.StimOnset = startStim - expTime_start;
-        trialRow.StimMoveUp = moveUpTime;
+     
     end 
     [avgVelocity,elapsedTime_s,totalDist_cm] = computeAverageEncoderVelocity(app, encoderSamples, onsetSample);
     trialRow.MeasuredSpeed_cm_s = avgVelocity;
@@ -257,7 +260,14 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
     trialRow.Response = buttonPushed;
     trialRow.ReactionTime = respTime;
     trialRow.OnsetSample = {onsetSample};
+    trialRow.StimMoveUp = moveUpTime; %Remove for AC and JH 
     updateCurrentSpeedDisplay(app, avgVelocity);
+    if ~isActive && ~no_motion_flag %Makes sure that the next motor command is sent only after this one is finished, otherwise the stage would not travvel the whole dista
+        secLeftToMove = armMovStopTime - GetSecs; 
+        if secLeftToMove > 0
+            pause(secLeftToMove);
+        end
+    end
 end
 
 function  printNoMotionCue(app, windowPtr,isActive)
