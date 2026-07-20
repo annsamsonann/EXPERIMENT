@@ -177,6 +177,10 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         if ~isActive 
             cmd = sprintf("M %d\n", stepsArduino);
             writeline(app.LinearStage_motor, cmd);
+           
+            armMoveDurSec = abs(stepsArduino / speedArduino); % not correct computation 
+            armMovStopTime = startArmMov + armMoveDurSec;
+                
         end 
 
         while true
@@ -197,10 +201,12 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     trialRow.StimDuration_arduino), "string");
                 startStim = GetSecs;
                 stimEndTime = startStim + stimDurSec;
-
-                armMoveDurSec = abs(stepsArduino / speedArduino);
-                armMovStopTime = startArmMov + armMoveDurSec;
-                
+                if isActive
+                    endTime = stimEndTime;
+                elseif ~isActive
+                    endTime = armMovStopTime;
+                end
+                   
                 stimStarted = true;
             end
 
@@ -214,7 +220,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     stopCollectingSamples = true; 
                  
                 end
-                if GetSecs >= stimEndTime % dhpuld be mov duration instead of end time 
+                if  GetSecs >= stimEndTime
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     break
@@ -263,103 +269,114 @@ function  printNoMotionCue(app, windowPtr,isActive)
     end
     DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
     Screen('Flip', windowPtr);
-end 
+end
 
+function drawInstructionCue(app, windowPtr, isActive, speedStr, moveDir, showBall, timeCueStart, cuedSpeed)
 
-function drawInstructionCue(app, windowPtr, isActive, speedStr, moveDir, showBall, timeCueStart,cuedSpeed)
+    % Access config
+ 
+    % Resolve speed from cue code
     if cuedSpeed == 1
         speedCmSec = ExpConfig.slow_target;
     elseif cuedSpeed == 2
         speedCmSec = ExpConfig.fast_target;
     else
-        speedCmSec = NaN;
-    end 
+        error('cuedSpeed must be 1 (slow) or 2 (fast).');
+    end
 
+    % Config values
     screenWidthCm = ExpConfig.screenWidthCm;
-    ballDiamDeg = ExpConfig.ballDiamDeg;
-    viewDistCm = ExpConfig.viewDistCm;
-    padCm = ExpConfig.padCm; 
-    moveDurSec = ExpConfig.StageMotionDur_sec;
+    ballDiamDeg   = ExpConfig.ballDiamDeg;
+    viewDistCm    = ExpConfig.viewDistCm;
+    padCm         = ExpConfig.padCm;
+    moveDurSec    = ExpConfig.StageMotionDur_sec;
 
-    elapsed = mod(GetSecs - timeCueStart, moveDurSec); % this leads to update of the ball position every call 
+    % Time elapsed within one motion cycle
+    elapsed = mod(GetSecs - timeCueStart, moveDurSec);
     if elapsed < 0
         elapsed = 0;
     end
+
+    % Instruction text
+    dirStr = lower(strtrim(string(moveDir)));
     if isActive
-        textString = sprintf('Move %s %s', moveDir, speedStr);
-    else 
-        textString = sprintf('Arm will move %s %s', moveDir, speedStr);
+        textString = sprintf('Move %s %s', char(dirStr), speedStr);
+    else
+        textString = sprintf('Arm will move %s %s', char(dirStr), speedStr);
     end
+
     % Clear screen
     Screen('FillRect', windowPtr, [0 0 0]);
+
     % Window geometry
     [screenX, screenY] = Screen('WindowSize', windowPtr);
     centerX = screenX / 2;
     centerY = screenY / 2;
-    % Draw instruction text centered
+
+    % Draw centered instruction text
     DrawFormattedText(windowPtr, textString, 'center', 'center', [255 255 255]);
-    % Conversions
+
+    % Pixels per cm
     pixPerCm = screenX / screenWidthCm;
-    % Ball size: degrees -> cm -> pixels
-    ballDiamCm = 2 * viewDistCm * tand(ballDiamDeg / 2);
-    ballDiamPix = max(6, round(ballDiamCm * pixPerCm));
+
+    % Ball size: visual angle -> cm -> pixels
+    ballDiamCm    = 2 * viewDistCm * tand(ballDiamDeg / 2);
+    ballDiamPix   = max(6, round(ballDiamCm * pixPerCm));
     ballRadiusPix = ballDiamPix / 2;
-    % Motion distance
-    dxCm = speedCmSec * elapsed;
+
+    % Motion distance covered so far
+    dxCm  = speedCmSec * elapsed;
     dxPix = dxCm * pixPerCm;
-    totalDxCm = speedCmSec * moveDurSec;
+
+    % Total motion distance over full cue duration
+    totalDxCm  = speedCmSec * moveDurSec;
     totalDxPix = totalDxCm * pixPerCm;
-    % Padding corridor
-    padPix = padCm * pixPerCm;
+
+    % Padded motion corridor
+    padPix     = padCm * pixPerCm;
     leftBound  = padPix + ballRadiusPix;
     rightBound = screenX - padPix - ballRadiusPix;
     usableWidth = rightBound - leftBound;
+
     if totalDxPix > usableWidth
         error('Motion path too long for screen width and chosen padding.');
     end
-    % Center the full path within the padded corridor
-    pathLeft  = leftBound  + (usableWidth - totalDxPix) / 2;
-    pathRight = rightBound - (usableWidth - totalDxPix) / 2;
-    % 
-    if ~isActive
-        if strcmpi(moveDir, 'right')
-            ballX = pathLeft + dxPix;    % starts LEFT, moves right →
-        elseif strcmpi(moveDir, 'left')
-            ballX = pathRight - dxPix;
-        else
-            error('moveDir must be ''left'' or ''right''.');
-            fprintf('Move dir is in LEFT: ', moveDir);
-        end
-    else
-        if strcmpi(moveDir, 'right')
-            ballX = pathRight - dxPix;  % starts right, moves left  ← swap
-        elseif strcmpi(moveDir, 'left')
-            ballX = pathRight - dxPix; %ballX = pathLeft + dxPix;
 
-        else
-            error('moveDir must be ''left'' or ''right''.');
-            fprintf('Move dir is in LEFT: ', moveDir);
-        end
-    end 
-    % if strcmpi(moveDir, 'right')
-    %     ballX = pathLeft + dxPix;
-    %     fprintf('Move dir is in RIGHT: %s,', moveDir);
-    % elseif strcmpi(moveDir, 'left')
-    %     ballX = pathRight - dxPix;
-    %     fprintf('Move dir is in left: %s,', moveDir);
-  
-    % Safety clamp
+    % Center the path inside the padded corridor
+    extraSpace = usableWidth - totalDxPix;
+    pathLeft   = leftBound  + extraSpace / 2;
+    pathRight  = rightBound - extraSpace / 2;
+
+    % Ball position: RIGHT means left->right, LEFT means right->left
+    if dirStr == "right"
+        ballX = pathLeft + dxPix;
+    elseif dirStr == "left"
+        ballX = pathRight - dxPix;
+    else
+        error('moveDir must be ''left'' or ''right''. Got: %s', char(dirStr));
+    end
+
+    % Clamp for safety
     ballX = max(leftBound, min(rightBound, ballX));
-    % Ball below centered text
+
+    % Ball vertical position below text
     ballY = centerY + 80;
-    ballRect = [ballX - ballRadiusPix, ballY - ballRadiusPix, ...
-        ballX + ballRadiusPix, ballY + ballRadiusPix];
-    % Draw ball if requested
+
+    % Build rect centered on (ballX, ballY)
+    baseRect = [0 0 ballDiamPix ballDiamPix];
+    ballRect = CenterRectOnPointd(baseRect, ballX, ballY);
+    % 
+    % % Optional debug print to MATLAB command window
+    % fprintf('dir=%s | elapsed=%.3f | dxPix=%.2f | pathLeft=%.2f | pathRight=%.2f | ballX=%.2f\n', ...
+    %     char(dirStr), elapsed, dxPix, pathLeft, pathRight, ballX);
+
+    % Draw ball
     if showBall
         Screen('FillOval', windowPtr, [255 0 0], ballRect);
     end
+
+    % Flip to screen
     Screen('Flip', windowPtr);
+
 end
 
-
-    

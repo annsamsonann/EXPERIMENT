@@ -177,7 +177,8 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         if ~isActive 
             cmd = sprintf("M %d\n", stepsArduino);
             writeline(app.LinearStage_motor, cmd);
-            armMoveDurSec = abs(stepsArduino / speedArduino);
+           
+            armMoveDurSec = trialRow.Measured_Arm_Mov_Duration_s; %For JH  abs(stepsArduino / speedArduino); % not correct computation 
             armMovStopTime = startArmMov + armMoveDurSec;
                 
         end 
@@ -219,7 +220,7 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
                     stopCollectingSamples = true; 
                  
                 end
-                if GetSecs >= endTime % Either the stimulus end time or the arm movement duration end time 
+                if  GetSecs >= endTime % OR when arm motion is done? 
                     DrawFormattedText(windowPtr, '', 'center', 'center', [255 255 255]);
                     Screen('Flip', windowPtr);
                     break
@@ -235,19 +236,18 @@ function [trialRow, no_motion_flag, moveDir] = runTrial(app, windowPtr, trialRow
         if indentMovedDown %move stim up after rotation is done 
             indentLoc = app.indentZero;
             write(app.indentationActuator, sprintf("%d %d\n", 1, indentLoc), "string");
+            moveUpTime = GetSecs - startStim;
         end 
 
         if stimStarted && isempty(buttonPushed) % if did not respond before the end of stim rotation
             [buttonPushed, respTime] = waitForResponse(app, windowPtr, startStim);
         end 
-
-
-
     end
     if ~stimStarted
         trialRow.StimOnset = nan;
     else
         trialRow.StimOnset = startStim - expTime_start;
+        trialRow.StimMoveUp = moveUpTime;
     end 
     [avgVelocity,elapsedTime_s,totalDist_cm] = computeAverageEncoderVelocity(app, encoderSamples, onsetSample);
     trialRow.MeasuredSpeed_cm_s = avgVelocity;
